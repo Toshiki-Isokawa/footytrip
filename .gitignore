@@ -1,0 +1,7 @@
+# Node
+frontend/footytrip-client/node_modules/
+
+# Python
+backend/venv/
+backend/__pycache__/
+backend/.env
