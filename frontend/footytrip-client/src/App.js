@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Home from "./pages/Home";
 
 function App() {
   const [msg, setMsg] = useState("");
@@ -11,8 +12,7 @@ function App() {
 
   return (
     <div>
-      <h1>FootyTrip</h1>
-      <p>{msg}</p>
+      <Home />
     </div>
   );
 }
