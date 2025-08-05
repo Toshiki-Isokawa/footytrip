@@ -1,8 +1,12 @@
 import React, { useState } from "react";
 import { Menu, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const NaviBar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+  const token = localStorage.getItem("access_token");
+
   const buttons = [
     "Prediction",
     "Schedule",
@@ -11,6 +15,15 @@ const NaviBar = () => {
     "Make a Trip Plan",
     "Setting",
   ];
+
+  const handleClick = (label) => {
+    if (!token) {
+      navigate("/"); // force stay on home
+    } else {
+      // TODO: navigate to real pages when built
+      console.log(`Navigate to: ${label}`);
+    }
+  };
 
   return (
     <div className="bg-[#a0ddd6] shadow-md sticky top-[64px] z-40 rounded-xl mx-4 mt-4">
@@ -22,15 +35,12 @@ const NaviBar = () => {
         </button>
       </div>
 
-      {/* Buttons - hidden on mobile unless open */}
-      <div
-        className={`${
-          isOpen ? "block" : "hidden"
-        } md:flex md:justify-between md:px-4 md:py-2`}
-      >
+      {/* Buttons */}
+      <div className={`${isOpen ? "block" : "hidden"} md:flex md:justify-between md:px-4 md:py-2`}>
         {buttons.map((label, index) => (
           <button
             key={index}
+            onClick={() => handleClick(label)}
             className="w-full md:w-auto text-sm font-medium text-gray-700 hover:text-white hover:bg-teal-500 py-2 px-2 md:mx-1 rounded transition duration-200 text-left md:text-center"
           >
             {label}
