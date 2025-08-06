@@ -16,6 +16,22 @@ class UserLogin(db.Model):
         return f"<UserLogin {self.email}>"
     
 
+class User(db.Model):
+    __tablename__ = "user"
+
+    user_id = db.Column(db.Integer, db.ForeignKey("user_login.user_id"), primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    fav_team = db.Column(db.String(100), nullable=True)
+    fav_player = db.Column(db.String(100), nullable=True)
+    date_of_birth = db.Column(db.Date, nullable=True)
+    profile = db.Column(db.String(255), nullable=False)  # store image URL or filename
+    point = db.Column(db.Integer, default=0, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    edited_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    def __repr__(self):
+        return f"<User {self.name}>"
+
     """
     __tablename__ = 'users'
     user_id = db.Column(db.Integer, primary_key=True)

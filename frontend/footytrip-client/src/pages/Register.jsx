@@ -17,8 +17,9 @@ function Register() {
 
     const data = await res.json();
     if (res.ok) {
-      alert("Registered! Now log in.");
-      navigate("/login");
+      alert(data.msg);
+      localStorage.setItem("access_token", data.access_token);
+      navigate("/account");
     } else {
       alert(data.msg || "Registration failed");
     }
