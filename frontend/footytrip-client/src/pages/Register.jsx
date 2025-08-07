@@ -1,25 +1,56 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 
 function Register() {
-  const [email, setEmail] = useState("");
+  const location = useLocation();
+  const login = location.state?.login || {};
+  const [email, setEmail] = useState(login.email || "");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const isEditMode = location.state?.from === "/settings";
+
+  useEffect(() => {
+    if (login?.email) {
+      setEmail(login.email);
+    }
+  }, [login]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = await fetch("http://127.0.0.1:5000/api/register", {
+
+    console.log("Register page loaded");
+    console.log("location.state:", location.state);
+    console.log("login:", login);
+    console.log("isEditMode:", isEditMode);
+
+    const endpoint = isEditMode
+    ? "http://127.0.0.1:5000/api/update-login"
+    : "http://127.0.0.1:5000/api/register";
+
+    console.log("Selected endpoint:", endpoint);
+
+    const token = localStorage.getItem("access_token");
+
+    const res = await fetch(endpoint, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json" 
+      },
       body: JSON.stringify({ email, password }),
     });
 
     const data = await res.json();
     if (res.ok) {
       alert(data.msg);
-      localStorage.setItem("access_token", data.access_token);
-      navigate("/account");
+      if (isEditMode) {
+        localStorage.setItem("access_token", data.access_token);
+        navigate("/settings");
+      } else {
+        localStorage.setItem("access_token", data.access_token);
+        navigate("/account");
+      }
     } else {
       alert(data.msg || "Registration failed");
     }

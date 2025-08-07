@@ -1,28 +1,35 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useContext } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { AuthContext } from "../contexts/AuthContext";
 
 
 function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const navigate = useNavigate();
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const navigate = useNavigate();
+    const location = useLocation();
+    const from = location.state?.from || "/";
+    const { login } = useContext(AuthContext);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const res = await fetch("http://127.0.0.1:5000/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        const res = await fetch("http://127.0.0.1:5000/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+        });
 
-    const data = await res.json();
-    if (res.ok) {
-      localStorage.setItem("access_token", data.access_token);
-      navigate("/"); // Redirect to home
-    } else {
-      alert(data.msg || "Login failed");
-    }
-  };
+        const data = await res.json();
+        console.log("Login response data:", data);
+        console.log("Login response data:", data.access_token);
+        if (res.ok) {
+            login(data.access_token);
+            console.log("Login successful, navigating to:", from);      
+            navigate(from); 
+        } else {
+            alert(data.msg || "Login failed");
+        }
+    };
 
   return (
     <div className="p-4 max-w-sm mx-auto">

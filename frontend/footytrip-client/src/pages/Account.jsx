@@ -1,10 +1,17 @@
 // src/pages/Account.jsx
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 function Account() {
-    const [name, setName] = useState("");
-    const [dob, setDob] = useState("");
+    const location = useLocation();
+    const user = location.state?.user || {};
+    const [name, setName] = useState(user.name || "");
+    const formatDate = (dateStr) => {
+        const date = new Date(dateStr);
+        if (isNaN(date)) return "";
+        return date.toISOString().slice(0, 10); // yyyy-mm-dd
+        };
+    const [dob, setDob] = useState(formatDate(user.date_of_birth) || "");
     const [leagues, setLeagues] = useState([]);
     const [selectedLeague, setSelectedLeague] = useState("");
     const [teams, setTeams] = useState([]);
@@ -13,8 +20,11 @@ function Account() {
     const [playerOptions, setPlayerOptions] = useState([]);
     const [favPlayer, setFavPlayer] = useState("");
     const [profileImage, setProfileImage] = useState(null);
-    const [previewUrl, setPreviewUrl] = useState(null);
+    const [previewUrl, setPreviewUrl] = useState(
+        user.profile ? `http://127.0.0.1:5000/static/profiles/${user.profile}` : null
+        );
     const navigate = useNavigate();
+    const from = location.state?.from || "/";
 
     // Fetch leagues
     const [hasFetchedLeagues, setHasFetchedLeagues] = useState(false);
@@ -88,7 +98,7 @@ function Account() {
         const data = await res.json();
         if (res.ok) {
             alert("Account setup complete!");
-            navigate("/");
+            navigate(from);
         } else {
             alert(data.msg || "Submission failed");
         }

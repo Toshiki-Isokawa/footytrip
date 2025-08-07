@@ -15,10 +15,13 @@ const Header = () => {
   return (
     <header className="bg-white shadow-md sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-[#a0ddd6]">
-          <GlobeAltIcon className="h-6 w-6 text-[#a0ddd6]" />
+        <button
+          onClick={() => navigate("/")}
+          className="flex items-center gap-2 text-2xl font-bold text-[#a0ddd6] hover:text-[#c6ece7] focus:outline-none"
+        >
+          <GlobeAltIcon className="h-6 w-6 text-[#a0ddd6] hover:text-[#c6ece7]" />
           FootyTrip
-        </h1>
+        </button>
         <nav className="space-x-4 text-sm md:text-base">
           {!token ? (
             <>
