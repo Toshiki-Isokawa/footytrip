@@ -1,6 +1,10 @@
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from flask_bcrypt import Bcrypt
 
+app = Flask(__name__)
+bcrypt = Bcrypt(app)
 db = SQLAlchemy()
 
 class UserLogin(db.Model):
@@ -11,6 +15,12 @@ class UserLogin(db.Model):
     hashed_password = db.Column(db.String(256), nullable=False)
     add_date = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     edit_date = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    def set_password(self, password):
+        self.hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+
+    def check_password(self, password):
+        return bcrypt.check_password_hash(self.hashed_password, password)
 
     def __repr__(self):
         return f"<UserLogin {self.email}>"

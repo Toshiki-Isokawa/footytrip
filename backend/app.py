@@ -53,9 +53,9 @@ def login():
 
     user = UserLogin.query.filter_by(email=email).first()
 
-    if user and bcrypt.check_password_hash(user.hashed_password, password):
+    if user and user.check_password(password):
         access_token = create_access_token(identity=user.email)
-        return jsonify(accsess_token=access_token), 200
+        return jsonify(access_token=access_token), 200
     else:
         return jsonify({"msg": "Invalid credentials"}), 401
 
@@ -205,6 +205,51 @@ def search_players():
         })
 
     return jsonify(result)
+
+
+@app.route("/api/me", methods=["GET"])
+@jwt_required()
+def get_user_profile():
+    email = get_jwt_identity()
+    login_user = UserLogin.query.filter_by(email=email).first()
+
+    if not login_user:
+        return jsonify({"msg": "User not found"}), 404
+
+    user_profile = User.query.filter_by(user_id=login_user.user_id).first()
+
+    return jsonify({
+        "user": {
+            "name": user_profile.name if user_profile else "",
+            "date_of_birth": user_profile.date_of_birth if user_profile else "",
+            "fav_team": user_profile.fav_team if user_profile else "",
+            "fav_player": user_profile.fav_player if user_profile else "",
+            "profile": user_profile.profile if user_profile else None,
+            "point": user_profile.point if user_profile else 0
+        },
+        "login": {
+            "email": login_user.email
+        }
+    }), 200
+
+@app.route("/api/update-login", methods=["POST"])
+@jwt_required()
+def update_login():
+    email = get_jwt_identity()
+    data = request.get_json()
+    new_password = data.get("password")
+
+    if not new_password:
+        return jsonify({"msg": "Password is required"}), 400
+
+    user = UserLogin.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    user.set_password(new_password)
+    db.session.commit()
+    return jsonify({"msg": "Password updated successfully"}), 200
+
 
 if __name__ == "__main__":
     app.run(debug=True)

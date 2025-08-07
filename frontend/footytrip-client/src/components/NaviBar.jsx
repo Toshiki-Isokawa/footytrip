@@ -1,30 +1,39 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../contexts/AuthContext";
 
 const NaviBar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const navigate = useNavigate();
-  const token = localStorage.getItem("access_token");
+    const [isOpen, setIsOpen] = useState(false);
+    const navigate = useNavigate();
+    const { token } = useContext(AuthContext);
 
-  const buttons = [
+    const buttons = [
     "Prediction",
     "Schedule",
     "Find Footy",
     "Post Trip",
     "Make a Trip Plan",
     "Setting",
-  ];
+    ];
 
-  const handleClick = (label) => {
-    if (!token) {
-      navigate("/"); // force stay on home
-    } else {
-      // TODO: navigate to real pages when built
-      console.log(`Navigate to: ${label}`);
-    }
-  };
+    const handleClick = (label) => {
+        const routeMap = {
+        "Prediction": "/prediction",
+        "Schedule": "/schedule",
+        "Find Footy": "/find",
+        "Post Trip": "/post-trip",
+        "Make a Trip Plan": "/make-trip",
+        "Setting": "/settings",
+        };
+        const path = routeMap[label];
 
+        if (!token) {
+            navigate("/login", { state: { from: path } }); 
+        } else if (path) {
+            navigate(path);
+        }
+    };
   return (
     <div className="bg-[#a0ddd6] shadow-md sticky top-[64px] z-40 rounded-xl mx-4 mt-4">
       {/* Mobile Toggle */}
