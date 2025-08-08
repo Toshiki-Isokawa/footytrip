@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_migrate import Migrate
 from models import db, UserLogin, User, Trip
+from utils import save_uploaded_file
 from flask_cors import CORS
 import os
 from dotenv import load_dotenv
@@ -103,13 +104,7 @@ def setup_account():
     if not all([name, date_of_birth, fav_team, fav_player]):
         return jsonify({"msg": "All fields except profile image are required"}), 400
 
-    profile_filename = None
-    if profile_file:
-        filename = secure_filename(profile_file.filename)
-        profile_path = os.path.join("static/profiles", filename)
-        os.makedirs(os.path.dirname(profile_path), exist_ok=True)
-        profile_file.save(profile_path)
-        profile_filename = filename
+    profile_filename = save_uploaded_file(profile_file, subdir="profiles")
 
     # Create or update user profile
     user.name = name
