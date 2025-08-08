@@ -173,7 +173,7 @@ function Account() {
                         >
                             <option value="">-- Select a team --</option>
                             {teams.map((team) => (
-                            <option key={team.id} value={team.id}>
+                            <option key={team.id} value={team.name}>
                                 {team.name}
                             </option>
                             ))}
