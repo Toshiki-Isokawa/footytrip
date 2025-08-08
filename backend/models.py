@@ -34,7 +34,7 @@ class User(db.Model):
     fav_team = db.Column(db.String(100), nullable=True)
     fav_player = db.Column(db.String(100), nullable=True)
     date_of_birth = db.Column(db.Date, nullable=True)
-    profile = db.Column(db.String(255), nullable=False)  # store image URL or filename
+    profile = db.Column(db.String(255), nullable=True)  # store image URL or filename
     point = db.Column(db.Integer, default=0, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     edited_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

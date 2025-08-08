@@ -7,11 +7,16 @@ import AccountInfoCard from "../components/AccountInfoCard";
 import LoginInfoCard from "../components/LoginInfoCard";
 
 function Setting() {
-    const { token } = useContext(AuthContext);
+    const { token, loading } = useContext(AuthContext);
     const [user, setUser] = useState(null);
     const navigate = useNavigate();
 
   useEffect(() => {
+    if (loading) return;
+    if (!token) {
+      navigate("/login", { state: { from: "/settings" } });
+      return;
+    }
 
     fetch("http://127.0.0.1:5000/api/me", {
       headers: { Authorization: `Bearer ${token}` },
@@ -28,7 +33,7 @@ function Setting() {
         alert("Please log in again");
         navigate("/login", { state: { from: "/settings" } });
       });
-  }, []);
+  }, [loading, token]);
 
   if (!user) return <div>Loading...</div>;
 
