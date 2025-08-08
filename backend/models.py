@@ -42,37 +42,27 @@ class User(db.Model):
     def __repr__(self):
         return f"<User {self.name}>"
 
-    """
-    __tablename__ = 'users'
-    user_id = db.Column(db.Integer, primary_key=True)
-    first_name = db.Column(db.String(50), nullable=False)
-    last_name = db.Column(db.String(50), nullable=False)
-    age = db.Column(db.Integer, nullable=False)
-    date_of_birth = db.Column(db.Date, nullable=False)
-    nationality = db.Column(db.String(50), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    phone_number = db.Column(db.String(20), nullable=False)
-    favorite_team = db.Column(db.String(100), nullable=False)
-    favorite_player = db.Column(db.String(100), nullable=False)
-    profile_picture = db.Column(db.LargeBinary, nullable=True)
-
-    trips = db.relationship('Trip', backref='user', cascade='all, delete-orphan')
-    matches = db.relationship('Match', backref='user', cascade='all, delete-orphan')
 
 class Trip(db.Model):
-    __tablename__ = 'trips'
+    __tablename__ = "trip"
+
     trip_id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
-    country = db.Column(db.String(50), nullable=False)
-    city = db.Column(db.String(50), nullable=False)
-    stadium = db.Column(db.String(100), nullable=False)
-    start_date = db.Column(db.Date, nullable=False)
-    end_date = db.Column(db.Date, nullable=False)
-    note = db.Column(db.Text, nullable=False)
-    photo = db.Column(db.LargeBinary, nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.user_id"), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    photo = db.Column(db.String(255), nullable=True)  # filename or URL
+    country = db.Column(db.String(100), nullable=False)
+    city = db.Column(db.String(100), nullable=False)
+    stadium = db.Column(db.String(200), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    comments = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    edited_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
-    match = db.relationship('Match', backref='trip', uselist=False, cascade='all, delete-orphan')
+    user = db.relationship("User", backref=db.backref("trips", lazy=True))
 
+    def __repr__(self):
+        return f"<Trip {self.title} by User {self.user_id}>"
+    """
 class Match(db.Model):
     __tablename__ = 'matches'
     match_id = db.Column(db.Integer, primary_key=True)
