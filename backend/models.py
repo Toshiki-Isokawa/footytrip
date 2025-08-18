@@ -1,11 +1,7 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
+from extensions import db, bcrypt, jwt
 from datetime import datetime
-from flask_bcrypt import Bcrypt
 
-app = Flask(__name__)
-bcrypt = Bcrypt(app)
-db = SQLAlchemy()
 
 class UserLogin(db.Model):
     __tablename__ = 'user_login'
