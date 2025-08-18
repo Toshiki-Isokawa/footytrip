@@ -62,6 +62,23 @@ class Trip(db.Model):
 
     def __repr__(self):
         return f"<Trip {self.title} by User {self.user_id}>"
+    
+class Follow(db.Model):
+    __tablename__ = "follows"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    follower_id = db.Column(db.Integer, db.ForeignKey("user.user_id"), nullable=False)
+    followed_id = db.Column(db.Integer, db.ForeignKey("user.user_id"), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+class Favorite(db.Model):
+    __tablename__ = "favorites"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.user_id"), nullable=False)
+    trip_id = db.Column(db.Integer, db.ForeignKey("trip.trip_id"), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
     """
 class Match(db.Model):
     __tablename__ = 'matches'

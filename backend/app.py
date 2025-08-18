@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_migrate import Migrate
-from models import db, UserLogin, User, Trip
+from models import db, UserLogin, User, Trip, Follow, Favorite
 from utils import save_uploaded_file
 from flask_cors import CORS
 import os
@@ -245,6 +245,140 @@ def update_login():
     db.session.commit()
     return jsonify({"msg": "Password updated successfully"}), 200
 
+
+@app.route("/api/trips", methods=["POST"])
+@jwt_required()
+def create_trip():
+    email = get_jwt_identity()
+    user_login = UserLogin.query.filter_by(email=email).first()
+    if not user_login:
+        return jsonify({"msg": "User not found"}), 404
+
+    user = User.query.filter_by(user_id=user_login.user_id).first()
+    if not user:
+        return jsonify({"msg": "User profile not found"}), 404
+
+    title = request.form.get("title")
+    country = request.form.get("country")
+    city = request.form.get("city")
+    stadium = request.form.get("stadium")
+    date = request.form.get("date")
+    comments = request.form.get("comments")
+    photo_file = request.files.get("photo")
+
+    if not all([title, country, city, stadium, date]):
+        return jsonify({"msg": "Missing required fields"}), 400
+
+    photo_filename = save_uploaded_file(photo_file, subdir="trips") if photo_file else None
+
+    trip = Trip(
+        user_id=user.user_id,
+        title=title,
+        photo=photo_filename,
+        country=country,
+        city=city,
+        stadium=stadium,
+        date=datetime.strptime(date, "%Y-%m-%d"),
+        comments=comments
+    )
+    db.session.add(trip)
+    db.session.commit()
+
+    return jsonify({"msg": "Trip created successfully", "trip_id": trip.trip_id}), 201
+
+
+@app.route("/api/trips/<int:trip_id>", methods=["GET"])
+def get_trip(trip_id):
+    trip = Trip.query.get(trip_id)
+    if not trip:
+        return jsonify({"msg": "Trip not found"}), 404
+
+    user = User.query.get(trip.user_id)
+
+    return jsonify({
+        "trip_id": trip.trip_id,
+        "title": trip.title,
+        "photo": trip.photo,
+        "country": trip.country,
+        "city": trip.city,
+        "stadium": trip.stadium,
+        "date": trip.date.strftime("%Y-%m-%d"),
+        "comments": trip.comments,
+        "user": {
+            "user_id": user.user_id,
+            "name": user.name,
+            "profile": user.profile
+        }
+    }), 200
+
+
+@app.route("/api/users/<int:user_id>/feed", methods=["GET"])
+@jwt_required()
+def get_user_feed(user_id):
+    current_email = get_jwt_identity()
+    current_user = UserLogin.query.filter_by(email=current_email).first()
+    if not current_user or current_user.user_id != user_id:
+        return jsonify({"msg": "Unauthorized"}), 403
+
+    followed_ids = db.session.query(Follow.followed_id).filter_by(follower_id=user_id).all()
+    followed_ids = [fid[0] for fid in followed_ids]
+
+    if not followed_ids:
+        return jsonify([]), 200
+
+    trips = Trip.query.filter(Trip.user_id.in_(followed_ids)).order_by(Trip.created_at.desc()).all()
+
+    results = []
+    for trip in trips:
+        user = User.query.get(trip.user_id)
+        results.append({
+            "trip_id": trip.trip_id,
+            "title": trip.title,
+            "photo": trip.photo,
+            "stadium": trip.stadium,
+            "date": trip.date.strftime("%Y-%m-%d"),
+            "user": {
+                "user_id": user.user_id,
+                "name": user.name,
+                "profile": user.profile
+            }
+        })
+
+    return jsonify(results), 200
+
+
+@app.route("/api/users/<int:user_id>/favorites", methods=["GET"])
+@jwt_required()
+def get_user_favorites(user_id):
+    current_email = get_jwt_identity()
+    current_user = UserLogin.query.filter_by(email=current_email).first()
+    if not current_user or current_user.user_id != user_id:
+        return jsonify({"msg": "Unauthorized"}), 403
+
+    favorites = Favorite.query.filter_by(user_id=user_id).all()
+    trip_ids = [fav.trip_id for fav in favorites]
+
+    if not trip_ids:
+        return jsonify([]), 200
+
+    trips = Trip.query.filter(Trip.trip_id.in_(trip_ids)).all()
+    results = []
+    for trip in trips:
+        user = User.query.get(trip.user_id)
+        results.append({
+            "trip_id": trip.trip_id,
+            "title": trip.title,
+            "photo": trip.photo,
+            "stadium": trip.stadium,
+            "date": trip.date.strftime("%Y-%m-%d"),
+            "user": {
+                "user_id": user.user_id,
+                "name": user.name,
+                "profile": user.profile
+            }
+        })
+
+    return jsonify(results), 200
 
 if __name__ == "__main__":
     app.run(debug=True)
