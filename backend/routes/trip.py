@@ -15,6 +15,13 @@ trip_bp = Blueprint("trip", __name__, url_prefix="/api")
 @jwt_required()
 def create_trip():
     email = get_jwt_identity()
+
+    print("Received trip creation request")
+    print("JWT identity:", email)
+    print("Form data received:", request.form)
+    print("Files received:", request.files)
+
+
     user_login = UserLogin.query.filter_by(email=email).first()
     user = User.query.filter_by(user_id=user_login.user_id).first()
     if not user:
