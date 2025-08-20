@@ -8,6 +8,7 @@ from extensions import db, bcrypt, jwt
 from routes.trip import trip_bp
 from routes.auth import auth_bp
 from routes.user import user_bp
+from routes.match import match_bp
 
 def create_app():
     app = Flask(__name__)
@@ -29,6 +30,7 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(user_bp)
     app.register_blueprint(trip_bp)
+    app.register_blueprint(match_bp)
 
     return app
 
