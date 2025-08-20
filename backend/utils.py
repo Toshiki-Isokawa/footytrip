@@ -2,6 +2,8 @@
 import os
 import uuid
 from werkzeug.utils import secure_filename
+from flask_jwt_extended import get_jwt_identity
+from models import UserLogin, User
 
 ALLOWED_EXT = {"png", "jpg", "jpeg", "gif"}
 UPLOAD_DIR = "static/uploads"
@@ -22,3 +24,11 @@ def save_uploaded_file(fileobj, subdir="trips"):
     filepath = os.path.join(dirpath, new_name)
     fileobj.save(filepath)
     return new_name
+
+def get_current_user():
+    """Return the User object for the current JWT identity, or None if not found."""
+    email = get_jwt_identity()
+    user_login = UserLogin.query.filter_by(email=email).first()
+    if not user_login:
+        return None
+    return User.query.filter_by(user_id=user_login.user_id).first()

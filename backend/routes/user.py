@@ -5,7 +5,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, verify_jwt_in_request
 from extensions import db
 from models import User, UserLogin
-from utils import save_uploaded_file
+from utils import save_uploaded_file, get_current_user
 
 user_bp = Blueprint("user", __name__, url_prefix="/api")
 
@@ -23,14 +23,10 @@ HEADERS = {
 def setup_account():
     if request.method == "OPTIONS":
         return "", 204  # allow CORS preflight
-
-    verify_jwt_in_request()
-    email = get_jwt_identity()
-    user_login = UserLogin.query.filter_by(email=email).first()
-
-    user = User.query.filter_by(user_id=user_login.user_id).first()
+    
+    user = get_current_user()
     if not user:
-        user = User(user_id=user_login.user_id)
+        user = User(user_id=user.user_id)
         db.session.add(user)
 
     name = request.form.get("name")

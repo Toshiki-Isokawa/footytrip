@@ -3,8 +3,8 @@ import os
 from datetime import datetime
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, Trip, User, UserLogin, Follow, Favorite
-from utils import save_uploaded_file
+from models import db, Trip, Follow, Favorite
+from utils import save_uploaded_file, get_current_user
 
 trip_bp = Blueprint("trip", __name__, url_prefix="/api")
 
@@ -14,16 +14,7 @@ trip_bp = Blueprint("trip", __name__, url_prefix="/api")
 @trip_bp.route("/trips", methods=["POST"])
 @jwt_required()
 def create_trip():
-    email = get_jwt_identity()
-
-    print("Received trip creation request")
-    print("JWT identity:", email)
-    print("Form data received:", request.form)
-    print("Files received:", request.files)
-
-
-    user_login = UserLogin.query.filter_by(email=email).first()
-    user = User.query.filter_by(user_id=user_login.user_id).first()
+    user = get_current_user()
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
@@ -141,9 +132,7 @@ def get_user_feed(user_id):
 @trip_bp.route("/trips/<int:trip_id>/favorite", methods=["POST"])
 @jwt_required()
 def favorite_trip(trip_id):
-    email = get_jwt_identity()
-    user_login = UserLogin.query.filter_by(email=email).first()
-    user = User.query.filter_by(user_id=user_login.user_id).first()
+    user = get_current_user()
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
@@ -165,9 +154,7 @@ def favorite_trip(trip_id):
 @trip_bp.route("/trips/<int:trip_id>/favorite", methods=["DELETE"])
 @jwt_required()
 def unfavorite_trip(trip_id):
-    email = get_jwt_identity()
-    user_login = UserLogin.query.filter_by(email=email).first()
-    user = User.query.filter_by(user_id=user_login.user_id).first()
+    user = get_current_user()
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
@@ -210,9 +197,7 @@ def get_user_favorites(user_id):
 @trip_bp.route("/trips/<int:trip_id>", methods=["PUT"])
 @jwt_required()
 def update_trip(trip_id):
-    email = get_jwt_identity()
-    user_login = UserLogin.query.filter_by(email=email).first()
-    user = User.query.filter_by(user_id=user_login.user_id).first()
+    user = get_current_user()
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
@@ -247,9 +232,7 @@ def update_trip(trip_id):
 @trip_bp.route("/trips/<int:trip_id>", methods=["DELETE"])
 @jwt_required()
 def delete_trip(trip_id):
-    email = get_jwt_identity()
-    user_login = UserLogin.query.filter_by(email=email).first()
-    user = User.query.filter_by(user_id=user_login.user_id).first()
+    user = get_current_user()
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
@@ -271,12 +254,11 @@ def delete_trip(trip_id):
 @trip_bp.route("trips/<int:trip_id>/favorite", methods=["GET"])
 @jwt_required()
 def check_favorite(trip_id):
-    email = get_jwt_identity()
-    user_login = UserLogin.query.filter_by(email=email).first()
+    user = get_current_user()
 
-    if not user_login:
+    if not user:
         return jsonify({"msg": "User not found"}), 404
 
-    favorite = Favorite.query.filter_by(user_id=user_login.user_id, trip_id=trip_id).first()
+    favorite = Favorite.query.filter_by(user_id=user.user_id, trip_id=trip_id).first()
 
     return jsonify({"is_favorite": bool(favorite)}), 200
