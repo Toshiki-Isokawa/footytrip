@@ -1,11 +1,16 @@
 import React, { useEffect, useState, useContext } from "react";
 import { AuthContext } from "../contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Header from "../components/Header";
 import NaviBar from "../components/NaviBar";
 
 
 function TripForm() {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const { token } = useContext(AuthContext);
+  const isEditing = Boolean(id);
+
   const [photoPreview, setPhotoPreview] = useState(null);
   const [leagues, setLeagues] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -21,7 +26,30 @@ function TripForm() {
     comments: ""
   });
 
-  const navigate = useNavigate();
+  // Fetch existing trip if editing
+  useEffect(() => {
+    if (isEditing) {
+      fetch(`http://127.0.0.1:5000/api/trips/${id}`)
+        .then((res) => res.json())
+        .then((data) => {
+        setFormData({
+          title: data.title,
+          photo: null, // file input stays empty
+          country: data.country,
+          city: data.city,
+          stadium: data.stadium, // stadium pre-filled
+          date: data.date,
+          comments: data.comments,
+        });
+
+        if (data.photo) {
+          setPhotoPreview(`http://127.0.0.1:5000/static/uploads/trips/${data.photo}`);
+        }
+      })
+        .catch((err) => console.error("Error fetching trip for edit:", err));
+    }
+  }, [id, isEditing]);
+
 
   // Fetch leagues
   useEffect(() => {
@@ -60,6 +88,7 @@ function TripForm() {
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setFormData({ ...formData, photo: file });
       setPhotoPreview(URL.createObjectURL(file));
     } else {
       setPhotoPreview(null);
@@ -69,7 +98,6 @@ function TripForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const token = localStorage.getItem("access_token");
     const submitData = new FormData();
     submitData.append("title", formData.title);
     if (formData.photo) submitData.append("photo", formData.photo);
@@ -79,17 +107,23 @@ function TripForm() {
     submitData.append("date", formData.date);
     submitData.append("comments", formData.comments);
 
-    const res = await fetch("http://127.0.0.1:5000/api/trips", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: submitData
-    });
+    try {
+      const res = await fetch(
+        isEditing
+          ? `http://127.0.0.1:5000/api/trips/${id}`
+          : "http://127.0.0.1:5000/api/trips",
+        {
+          method: isEditing ? "PUT" : "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: submitData,
+        }
+      );
+      if (!res.ok) throw new Error("Failed to save trip");
 
-    if (res.ok) {
-      const newTrip = await res.json();
-      navigate(`/trips/${newTrip.trip_id}`); // redirect to detail page
-    } else {
-      alert("Failed to create trip.");
+      const data = await res.json();
+      navigate(`/trips/${isEditing ? id : data.trip_id}`);
+    } catch (err) {
+      alert("Error: " + err.message);
     }
   };
 
@@ -98,7 +132,9 @@ function TripForm() {
       <Header />
       <NaviBar />
       <div className="max-w-3xl mx-auto p-6">
-        <h2 className="text-2xl font-bold mb-4">Create a New Trip</h2>
+        <h2 className="text-2xl font-bold mb-4">
+          {isEditing ? "Edit Trip" : "Create New Trip"}
+        </h2>
         <form className="space-y-4" onSubmit={handleSubmit}>
 
           <input
@@ -156,7 +192,7 @@ function TripForm() {
             value={formData.league}
             onChange={handleChange}
             className="border rounded p-2 w-full"
-            required
+            required={!isEditing}
           >
             <option value="">Select League</option>
             {leagues.map(league => (
@@ -173,7 +209,7 @@ function TripForm() {
             onChange={handleChange}
             className="border rounded p-2 w-full"
             disabled={!formData.league}
-            required
+            required={!isEditing}
           >
             <option value="">Select Team</option>
             {teams.map(team => (
@@ -186,7 +222,7 @@ function TripForm() {
           {/* Stadium Display */}
           <input
             type="text"
-            value={stadium}
+            value={formData.stadium}
             className="border rounded p-2 w-full bg-gray-100"
             readOnly
             placeholder="Stadium will appear here"
@@ -214,7 +250,7 @@ function TripForm() {
             type="submit"
             className="bg-blue-500 text-white rounded p-2 w-full hover:bg-blue-600"
           >
-            Submit
+            {isEditing ? "Update Trip" : "Create Trip"}
           </button>
         </form>
       </div>

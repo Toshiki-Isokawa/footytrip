@@ -55,6 +55,7 @@ class Trip(db.Model):
     edited_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     user = db.relationship("User", backref=db.backref("trips", lazy=True))
+    favorites = db.relationship("Favorite", backref="trip", cascade="all, delete-orphan", passive_deletes=True)
 
     def __repr__(self):
         return f"<Trip {self.title} by User {self.user_id}>"
@@ -71,7 +72,7 @@ class Favorite(db.Model):
     __tablename__ = "favorites"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.user_id"), nullable=False)
-    trip_id = db.Column(db.Integer, db.ForeignKey("trip.trip_id"), nullable=False)
+    trip_id = db.Column(db.Integer, db.ForeignKey("trip.trip_id", ondelete="CASCADE"), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 
