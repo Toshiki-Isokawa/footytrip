@@ -45,7 +45,7 @@ class Trip(db.Model):
     trip_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.user_id"), nullable=False)
     title = db.Column(db.String(200), nullable=False)
-    photo = db.Column(db.String(255), nullable=True)  # filename or URL
+    photo = db.Column(db.String(255), nullable=True)
     country = db.Column(db.String(100), nullable=False)
     city = db.Column(db.String(100), nullable=False)
     stadium = db.Column(db.String(200), nullable=False)
@@ -56,6 +56,7 @@ class Trip(db.Model):
 
     user = db.relationship("User", backref=db.backref("trips", lazy=True))
     favorites = db.relationship("Favorite", backref="trip", cascade="all, delete-orphan", passive_deletes=True)
+    match = db.relationship("Match", back_populates="trip", cascade="all, delete-orphan", uselist=False)
 
     def __repr__(self):
         return f"<Trip {self.title} by User {self.user_id}>"
@@ -76,19 +77,19 @@ class Favorite(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 
-    """
 class Match(db.Model):
-    __tablename__ = 'matches'
+    __tablename__ = "match"
     match_id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
-    trip_id = db.Column(db.Integer, db.ForeignKey('trips.trip_id'), nullable=False, unique=True)
+    trip_id = db.Column(db.Integer, db.ForeignKey("trip.trip_id", ondelete="CASCADE"), nullable=False, unique=True)
+    title = db.Column(db.String(200), nullable=False)
+    photo = db.Column(db.String(255), nullable=True)
     home_team = db.Column(db.String(100), nullable=False)
     away_team = db.Column(db.String(100), nullable=False)
-    home_team_scorer = db.Column(db.Text, nullable=False)
-    away_team_scorer = db.Column(db.Text, nullable=False)
-    mvp = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.Text, nullable=False)
-    photo1 = db.Column(db.LargeBinary, nullable=True)
-    photo2 = db.Column(db.LargeBinary, nullable=True)
-    photo3 = db.Column(db.LargeBinary, nullable=True)
-"""
+    score_home = db.Column(db.Integer, nullable=False)
+    score_away = db.Column(db.Integer, nullable=False)
+    favorite_players = db.Column(db.Text, nullable=True)
+    comments = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    edited_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    trip = db.relationship("Trip", back_populates="match", uselist=False)
