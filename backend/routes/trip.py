@@ -263,3 +263,20 @@ def delete_trip(trip_id):
     db.session.delete(trip)
     db.session.commit()
     return jsonify({"msg": "Trip deleted"}), 200
+
+
+# -----------------------------
+# GET /api/trips/<id>/favorite
+# -----------------------------
+@trip_bp.route("trips/<int:trip_id>/favorite", methods=["GET"])
+@jwt_required()
+def check_favorite(trip_id):
+    email = get_jwt_identity()
+    user_login = UserLogin.query.filter_by(email=email).first()
+
+    if not user_login:
+        return jsonify({"msg": "User not found"}), 404
+
+    favorite = Favorite.query.filter_by(user_id=user_login.user_id, trip_id=trip_id).first()
+
+    return jsonify({"is_favorite": bool(favorite)}), 200

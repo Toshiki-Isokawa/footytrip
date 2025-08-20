@@ -22,7 +22,7 @@ const NaviBar = () => {
         "Prediction": "/prediction",
         "Schedule": "/schedule",
         "Find Footy": "/find",
-        "Post Trip": "/post-trip",
+        "Post Trip": "/trips",
         "Make a Trip Plan": "/make-trip",
         "Setting": "/settings",
         };

@@ -148,7 +148,8 @@ def get_user_profile():
             "point": user_profile.point if user_profile else 0
         },
         "login": {
-            "email": login_user.email
+            "email": login_user.email,
+            "user_id": login_user.user_id
         }
     }), 200
 
