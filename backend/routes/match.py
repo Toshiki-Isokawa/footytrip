@@ -24,29 +24,35 @@ def create_match(trip_id):
 
     if trip.user_id != user.user_id:
         return jsonify({"msg": "You are not authorized to add a match to this trip"}), 403
+    
+    print("Request data:", request.form)  # Debugging line to check incoming data
 
     title = request.form.get("title")
+    home_team_id = request.form.get("home_team_id")
+    away_team_id = request.form.get("away_team_id")
     home_team = request.form.get("home_team")
     away_team = request.form.get("away_team")
-    home_score = request.form.get("home_score")
-    away_score = request.form.get("away_score")
-    favorite_player = request.form.get("favorite_player")
+    score_home = request.form.get("score_home")
+    score_away = request.form.get("score_away")
+    favorite_players = request.form.get("favorite_player")
     comments = request.form.get("comments")
     photo = request.files.get("photo")
 
-    if not all([home_team, away_team, home_score, away_score, favorite_player]):
+    if not all([home_team_id, away_team_id, home_team, away_team, score_away, score_home, favorite_players]):
         return jsonify({"msg": "Missing required fields"}), 400
     
-    photo_filename = save_uploaded_file(photo, subdir="trips") if photo else None
+    photo_filename = save_uploaded_file(photo, subdir="match") if photo else None
 
     match = Match(
         title=title,
         trip_id=trip.trip_id,
+        home_team_id=int(home_team_id),
         home_team=home_team,
+        away_team_id=int(away_team_id),
         away_team=away_team,
-        home_score=int(home_score),
-        away_score=int(away_score),
-        favorite_player=favorite_player,
+        score_home=int(score_home),
+        score_away=int(score_away),
+        favorite_players=favorite_players,
         comments=comments,
         photo=photo_filename,
     )
@@ -57,9 +63,9 @@ def create_match(trip_id):
     return jsonify({"msg": "Match created successfully", "match_id": match.match_id}), 201
 
 
-# -----------------------------
+# ----------------------------
 # GET /api/trips/:tripId/match
-# -----------------------------
+# ----------------------------
 @match_bp.route("/trips/<int:trip_id>/match", methods=["GET"])
 def get_match(trip_id):
     trip = Trip.query.get(trip_id)
@@ -72,12 +78,13 @@ def get_match(trip_id):
 
     return jsonify({
         "match_id": match.match_id,
+        "trip_user_id": match.trip.user_id,
         "title": match.title,
         "home_team": match.home_team,
         "away_team": match.away_team,
-        "home_score": match.home_score,
-        "away_score": match.away_score,
-        "favorite_player": match.favorite_player,
+        "score_home": match.score_home,
+        "score_away": match.score_away,
+        "favorite_player": match.favorite_players,
         "comments": match.comments,
         "photo": match.photo,
         "created_at": match.created_at.isoformat(),
@@ -85,10 +92,10 @@ def get_match(trip_id):
     }), 200
 
 
-# -----------------------------
-# PUT /api/trips/:tripId/match
-# -----------------------------
-@match_bp.route("/trips/<int:trip_id>/match", methods=["PUT"])
+# --------------------------------
+# PUT /api/trips/:tripId/match/edit
+# --------------------------------
+@match_bp.route("/trips/<int:trip_id>/match/edit", methods=["PUT"])
 @jwt_required()
 def update_match(trip_id):
     user = get_current_user()
@@ -108,22 +115,26 @@ def update_match(trip_id):
         return jsonify({"msg": "No match found for this trip"}), 404
 
     title = request.form.get("title", match.title)
+    home_team_id = request.form.get("home_team_id", match.home_team_id)
+    away_team_id = request.form.get("away_team_id", match.away_team_id)
     home_team = request.form.get("home_team", match.home_team)
     away_team = request.form.get("away_team", match.away_team)
-    home_score = request.form.get("home_score")
-    away_score = request.form.get("away_score")
-    favorite_player = request.form.get("favorite_player", match.favorite_player)
+    score_home = request.form.get("score_home", match.score_home)
+    score_away = request.form.get("score_away", match.score_away)
+    favorite_players = request.form.get("favorite_player", match.favorite_players)
     comments = request.form.get("comments", match.comments)
     photo = request.files.get("photo")
 
     photo_filename = save_uploaded_file(photo, subdir="trips") if photo else match.photo
 
     match.title = title
+    match.home_team_id = int(home_team_id) if home_team_id else match.home_team_id
+    match.away_team_id = int(away_team_id) if away_team_id else match
     match.home_team = home_team
     match.away_team = away_team
-    match.home_score = int(home_score) if home_score is not None else match.home_score
-    match.away_score = int(away_score) if away_score is not None else match.away_score
-    match.favorite_player = favorite_player
+    match.score_home = int(score_home) if score_home is not None else match.score_home
+    match.score_away = int(score_away) if score_away is not None else match.score_away
+    match.favorite_players = favorite_players
     match.comments = comments
     match.photo = photo_filename
 
