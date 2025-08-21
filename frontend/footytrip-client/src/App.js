@@ -9,6 +9,7 @@ import Setting from "./pages/Setting";
 import Trip from "./pages/Trips";
 import TripForm from "./pages/TripForm";
 import TripDetail from "./pages/TripDetail";
+import MatchForm from "./pages/MatchForm";
 import { AuthProvider } from "./contexts/AuthContext"; // Import AuthProvider
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
           <Route path="/trips/new" element={<TripForm />} />
           <Route path="/trips/:id" element={<TripDetail />} />
           <Route path="/trips/:id/edit" element={<TripForm />} />
+          <Route path="/trips/:tripId/match/new" element={<MatchForm />} />
         </Routes>
       </Router>
     </AuthProvider>
