@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../contexts/AuthContext";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import Header from "../components/Header";
 import NaviBar from "../components/NaviBar";
 
@@ -8,6 +8,8 @@ function MatchForm() {
   const { tripId } = useParams();
   const navigate = useNavigate();
   const { token } = useContext(AuthContext);
+  const location = useLocation();
+  const isEditing = Boolean(location.pathname.includes("edit"));
 
   const [formData, setFormData] = useState({
     photo: null,
@@ -17,7 +19,9 @@ function MatchForm() {
     homeLeague: "",
     awayLeague: "",
     homeTeam: "",
+    homeTeamId: "",
     awayTeam: "",
+    awayTeamId: "",
     homeScore: 0,
     awayScore: 0,
     favoritePlayer: "",
@@ -51,6 +55,37 @@ function MatchForm() {
       setPhotoPreview(null);
     }
   };
+
+  // Fetch existing trip if editing
+  useEffect(() => {
+    if (isEditing) {
+      fetch(`http://127.0.0.1:5000/api/trips/${tripId}/match`)
+        .then((res) => res.json())
+        .then((data) => {
+        setFormData({
+          title: data.title,
+          photo: null,
+          homeLeagueSearch: "",
+          awayLeagueSearch: "",
+          homeLeague: data.home_league_id,
+          awayLeague: data.away_league_id,
+          homeTeam: data.home_team,
+          homeTeamId: data.home_team_id,
+          awayTeam: data.away_team,
+          awayTeamId: data.away_team_id,
+          homeScore: data.score_home,
+          awayScore: data.score_away,
+          favoritePlayer: data.favorite_player || "",
+          comments: data.comments || "",
+        });
+
+        if (data.photo) {
+          setPhotoPreview(`http://127.0.0.1:5000/static/uploads/match/${data.photo}`);
+        }
+      })
+        .catch((err) => console.error("Error fetching trip for edit:", err));
+    }
+  }, [tripId, isEditing]);
 
   // Search leagues
   useEffect(() => {
@@ -114,17 +149,21 @@ function MatchForm() {
       const submitData = new FormData();
       submitData.append("title", formData.title);
       if (formData.photo) submitData.append("photo", formData.photo);
+      submitData.append("home_team_id", formData.homeTeamId);
+      submitData.append("away_team_id", formData.awayTeamId);
       submitData.append("home_team", formData.homeTeam);
       submitData.append("away_team", formData.awayTeam);
-      submitData.append("home_score", formData.homeScore);
-      submitData.append("away_score", formData.awayScore);
+      submitData.append("score_home", formData.homeScore);
+      submitData.append("score_away", formData.awayScore);
       submitData.append("favorite_player", formData.favoritePlayer);
       submitData.append("comments", formData.comments);
 
       const res = await fetch(
-        `http://127.0.0.1:5000/api/trips/${tripId}/match`,
+        isEditing
+          ? `http://127.0.0.1:5000/api/trips/${tripId}/match/edit`
+          : `http://127.0.0.1:5000/api/trips/${tripId}/match`,
         {
-          method: "POST",
+          method: isEditing ? "PUT" : "POST",
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -134,7 +173,7 @@ function MatchForm() {
 
       if (res.ok) {
         const data = await res.json();
-        navigate(`/trips/${tripId}/match/${data.match_id}`);
+        navigate(`/trips/${tripId}/match`);
       } else {
         const errData = await res.json();
         alert("Failed to create match: " + errData.msg);
@@ -149,7 +188,9 @@ function MatchForm() {
       <Header />
       <NaviBar />
       <div className="max-w-3xl mx-auto p-6">
-        <h2 className="text-2xl font-bold text-center mb-6">Create Match</h2>
+        <h2 className="text-2xl font-bold text-center mb-6">
+          {isEditing ? "Edit Match" : "Create Match"}
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
 
           {/* Photo upload */}
@@ -218,10 +259,17 @@ function MatchForm() {
             {homeTeams.length > 0 && (
               <select
                 name="homeTeam"
-                value={formData.homeTeam}
-                onChange={handleChange}
+                value={formData.homeTeamId}
+                onChange={(e) => {
+                  const selected = homeTeams.find((t) => t.id === parseInt(e.target.value));
+                  setFormData((prev) => ({
+                    ...prev,
+                    homeTeamId: selected?.id || "",
+                    homeTeam: selected?.name || "",
+                  }));
+                }}
                 className="border rounded p-2 w-full mt-2"
-                required
+                required={!isEditing}
               >
                 <option value="">Select Team</option>
                 {homeTeams.map((t) => (
@@ -268,10 +316,17 @@ function MatchForm() {
             {awayTeams.length > 0 && (
               <select
                 name="awayTeam"
-                value={formData.awayTeam}
-                onChange={handleChange}
+                value={formData.awayTeamId}
+                onChange={(e) => {
+                  const selected = awayTeams.find((t) => t.id === parseInt(e.target.value));
+                  setFormData((prev) => ({
+                    ...prev,
+                    awayTeamId: selected?.id || "",
+                    awayTeam: selected?.name || "",
+                  }));
+                }}
                 className="border rounded p-2 w-full mt-2"
-                required
+                required={!isEditing}
               >
                 <option value="">Select Team</option>
                 {awayTeams.map((t) => (
@@ -327,8 +382,8 @@ function MatchForm() {
                   checked={favoriteSide === "home"}
                   onChange={() => {
                     setFavoriteSide("home");
-                    if (formData.homeTeam) {
-                      fetchPlayers(formData.homeTeam);
+                    if (formData.homeTeamId) {
+                      fetchPlayers(formData.homeTeamId);
                     }
                   }}
                 />
@@ -342,8 +397,8 @@ function MatchForm() {
                   checked={favoriteSide === "away"}
                   onChange={() => {
                     setFavoriteSide("away");
-                    if (formData.awayTeam) {
-                      fetchPlayers(formData.awayTeam);
+                    if (formData.awayTeamId) {
+                      fetchPlayers(formData.awayTeamId);
                     }
                   }}
                 />
@@ -383,7 +438,7 @@ function MatchForm() {
             type="submit"
             className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
           >
-            Submit
+            {isEditing ? "Update Match" : "Create Match"}
           </button>
         </form>
       </div>

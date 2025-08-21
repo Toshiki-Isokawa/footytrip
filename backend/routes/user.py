@@ -213,5 +213,7 @@ def get_stadium():
     sportsTeam = details.get("sportsTeamJSONLD", {})
     stadium = sportsTeam.get("location", {}).get("name")
 
+    print("Stadium:", stadium)  # Debugging line to check stadium name
+
     return jsonify({"stadium": stadium})
 

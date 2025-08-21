@@ -14,7 +14,6 @@ function TripForm() {
   const [photoPreview, setPhotoPreview] = useState(null);
   const [leagues, setLeagues] = useState([]);
   const [teams, setTeams] = useState([]);
-  const [stadium, setStadium] = useState("");
   const [formData, setFormData] = useState({
     title: "",
     photo: null,
@@ -34,7 +33,7 @@ function TripForm() {
         .then((data) => {
         setFormData({
           title: data.title,
-          photo: null, // file input stays empty
+          photo: null,
           country: data.country,
           city: data.city,
           stadium: data.stadium, // stadium pre-filled
@@ -73,7 +72,12 @@ function TripForm() {
     if (!formData.team) return;
     fetch(`http://127.0.0.1:5000/api/stadium?team_id=${formData.team}`)
       .then(res => res.json())
-      .then(data => setStadium(data.stadium || ""))
+      .then(data =>
+        setFormData(prev => ({
+          ...prev,
+          stadium: data.stadium || "",
+        }))
+      )
       .catch(err => console.error("Error fetching stadium:", err));
   }, [formData.team]);
 
@@ -103,7 +107,7 @@ function TripForm() {
     if (formData.photo) submitData.append("photo", formData.photo);
     submitData.append("country", formData.country);
     submitData.append("city", formData.city);
-    submitData.append("stadium", stadium);
+    submitData.append("stadium", formData.stadium);
     submitData.append("date", formData.date);
     submitData.append("comments", formData.comments);
 

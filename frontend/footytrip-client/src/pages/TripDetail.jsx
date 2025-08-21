@@ -9,6 +9,7 @@ function TripDetail() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [trip, setTrip] = useState(null);
+  const [match, setMatch] = useState(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const { token } = useContext(AuthContext);
 
@@ -29,6 +30,16 @@ function TripDetail() {
       .then(res => res.json())
       .then(data => setTrip(data))
       .catch(err => console.error("Error fetching trip:", err));
+  }, [id]);
+
+  useEffect(() => {
+    fetch(`http://127.0.0.1:5000/api/trips/${id}/match`)
+      .then(res => {
+        if (res.status === 404) return null;
+        return res.json();
+      })
+      .then(data => setMatch(data))
+      .catch(err => console.error("Error fetching match:", err));
   }, [id]);
 
   // Check if this trip is in user's favorites
@@ -177,14 +188,36 @@ function TripDetail() {
           >
             Back to Trips
           </button>
-          {isOwner && (
-            <button
-              onClick={() => navigate(`/trips/${id}/match/new`)}
-              className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg"
-            >
-              Add Match
-            </button>
-          )}
+          <div className="flex justify-center gap-4">
+            {isOwner ? (
+              match ? (
+                <button
+                  onClick={() => navigate(`/trips/${id}/match`)}
+                  className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg"
+                >
+                  Check Match
+                </button>
+              ) : (
+                <button
+                  onClick={() => navigate(`/trips/${id}/match/new`)}
+                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
+                >
+                  Add Match
+                </button>
+              )
+            ) : (
+              match && (
+                <button
+                  onClick={() => navigate(`/trips/${id}/match`)}
+                  className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg"
+                >
+                  Check Match
+                </button>
+              )
+            )}
+          </div>
+
+
         </div>
       </div>
     </>
