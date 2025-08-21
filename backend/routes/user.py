@@ -123,6 +123,32 @@ def search_players():
     return jsonify(result)
 
 
+@user_bp.route("/players")
+def search_players_by_team():
+    team_id = request.args.get("team_id")
+    if not team_id:
+        return jsonify({"error": "Missing search parameter"}), 400
+    
+    url = f"https://{RAPIDAPI_HOST}/football-get-list-player"
+    params = {"teamid": team_id}
+    response = requests.get(url, headers=HEADERS, params=params)
+
+    if response.status_code != 200:
+        return jsonify({"error": "Failed to fetch players"}), 500
+
+    data = response.json()
+    squad = data.get("response", {}).get("list", {}).get("squad", [])
+    players = []
+
+    for group in squad:
+        members = group.get("members", [])
+        for player in members:
+            players.append({"id": player.get("id"), "name": player.get("name")})
+
+    return jsonify(players)
+    
+
+
 @user_bp.route("/me", methods=["GET"])
 @jwt_required()
 def get_user_profile():
