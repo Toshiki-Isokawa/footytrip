@@ -6,6 +6,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity, verify_jwt_in_req
 from extensions import db
 from models import User, UserLogin
 from utils import save_uploaded_file, get_current_user
+from flask_cors import cross_origin
 
 user_bp = Blueprint("user", __name__, url_prefix="/api")
 
@@ -19,18 +20,23 @@ HEADERS = {
 
 
 @user_bp.route("/account", methods=["POST", "OPTIONS"])
+@cross_origin()
 @jwt_required()
 def setup_account():
     if request.method == "OPTIONS":
-        return "", 204  # allow CORS preflight
-    
-    user = get_current_user()
-    if not user:
-        user = User(user_id=user.user_id)
-        db.session.add(user)
+        return jsonify({"msg": "CORS preflight OK"}), 200
+    email = get_jwt_identity()
+    user_login = UserLogin.query.filter_by(email=email).first()
+    if not user_login:
+        return jsonify({"msg": "User login not found"}), 404
+
+    if User.query.filter_by(user_id=user_login.user_id).first():
+        return jsonify({"msg": "Account already exists"}), 400
 
     name = request.form.get("name")
     date_of_birth = request.form.get("date_of_birth")
+    league = request.form.get("league")
+    league_id = request.form.get("league_id")
     fav_team = request.form.get("fav_team")
     fav_player = request.form.get("fav_player")
     profile_file = request.files.get("profile")
@@ -40,18 +46,44 @@ def setup_account():
 
     profile_filename = save_uploaded_file(profile_file, subdir="profiles")
 
-    # Update user profile
-    user.name = name
-    user.date_of_birth = date_of_birth
-    user.fav_team = fav_team
-    user.fav_player = fav_player
-    if profile_filename:
-        user.profile = profile_filename
-    user.point = 0
-    user.edited_at = datetime.utcnow()
+    user = User(
+        user_id=user_login.user_id,
+        profile=profile_filename,
+        name=request.form.get("name"),
+        league=league,
+        league_id=league_id,
+        fav_team=request.form.get("fav_team"),
+        fav_player=request.form.get("fav_player"),
+        date_of_birth=request.form.get("date_of_birth"),
+    )
 
+    db.session.add(user)
     db.session.commit()
     return jsonify({"msg": "Account setup complete"}), 200
+
+
+@user_bp.route("/account/edit", methods=["PUT"])
+@jwt_required()
+def update_account():
+    user = get_current_user()
+    if not user:
+        return jsonify({"msg": "Account not found"}), 404
+    
+    profile_file = request.files.get("profile")
+    if profile_file:
+        profile_filename = save_uploaded_file(profile_file, subdir="profiles")
+        user.profile = profile_filename
+
+    user.name = request.form.get("name", user.name)
+    user.league = request.form.get("league", user.league)
+    user.league_id = request.form.get("league_id", user.league_id)
+    user.fav_team = request.form.get("fav_team", user.fav_team)
+    user.fav_player = request.form.get("fav_player", user.fav_player)
+    user.date_of_birth = request.form.get("date_of_birth", user.date_of_birth)
+    user.point = user.point 
+
+    db.session.commit()
+    return jsonify({"msg": "Account updated successfully"}), 200
 
 
 @user_bp.route("/leagues")
@@ -164,6 +196,8 @@ def get_user_profile():
         "user": {
             "name": user_profile.name if user_profile else "",
             "date_of_birth": user_profile.date_of_birth if user_profile else "",
+            "league": user_profile.league if user_profile else "",
+            "league_id": user_profile.league_id if user_profile else None,
             "fav_team": user_profile.fav_team if user_profile else "",
             "fav_player": user_profile.fav_player if user_profile else "",
             "profile": user_profile.profile if user_profile else None,

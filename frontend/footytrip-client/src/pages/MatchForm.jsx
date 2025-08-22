@@ -17,13 +17,16 @@ function MatchForm() {
     homeLeagueSearch: "",
     awayLeagueSearch: "",
     homeLeague: "",
+    homeLeagueName: "",
     awayLeague: "",
+    awayLeagueName: "",
     homeTeam: "",
     homeTeamId: "",
     awayTeam: "",
     awayTeamId: "",
     homeScore: 0,
     awayScore: 0,
+    favoriteSide: "",
     favoritePlayer: "",
     comments: "",
   });
@@ -34,7 +37,6 @@ function MatchForm() {
   const [awayLeagues, setAwayLeagues] = useState([]);
   const [homeTeams, setHomeTeams] = useState([]);
   const [awayTeams, setAwayTeams] = useState([]);
-  const [favoriteSide, setFavoriteSide] = useState("");
   const [players, setPlayers] = useState([]);
 
   // Handle input changes
@@ -65,10 +67,10 @@ function MatchForm() {
         setFormData({
           title: data.title,
           photo: null,
-          homeLeagueSearch: "",
-          awayLeagueSearch: "",
-          homeLeague: data.home_league_id,
-          awayLeague: data.away_league_id,
+          homeLeague: data.home_team_league_id,
+          homeLeagueName: data.home_team_league,
+          awayLeague: data.away_team_league_id,
+          awayLeagueName: data.away_team_league,
           homeTeam: data.home_team,
           homeTeamId: data.home_team_id,
           awayTeam: data.away_team,
@@ -76,11 +78,26 @@ function MatchForm() {
           homeScore: data.score_home,
           awayScore: data.score_away,
           favoritePlayer: data.favorite_player || "",
+          favoriteSide: data.favorite_side || "",
           comments: data.comments || "",
         });
 
         if (data.photo) {
           setPhotoPreview(`http://127.0.0.1:5000/static/uploads/match/${data.photo}`);
+        }
+
+        if (data.home_team_league_id) {
+          fetchTeams(data.home_team_league_id, setHomeTeams);
+        }
+        if (data.away_team_league_id) {
+          fetchTeams(data.away_team_league_id, setAwayTeams);
+        }
+
+        // fetch players for favorite side
+        if (data.favorite_side === "home" && data.home_team_id) {
+          fetchPlayers(data.home_team_id);
+        } else if (data.favorite_side === "away" && data.away_team_id) {
+          fetchPlayers(data.away_team_id);
         }
       })
         .catch((err) => console.error("Error fetching trip for edit:", err));
@@ -149,12 +166,17 @@ function MatchForm() {
       const submitData = new FormData();
       submitData.append("title", formData.title);
       if (formData.photo) submitData.append("photo", formData.photo);
+      submitData.append("home_team_league", formData.homeLeagueName);
+      submitData.append("away_team_league", formData.awayLeagueName);
+      submitData.append("home_team_league_id", formData.homeLeague);
+      submitData.append("away_team_league_id", formData.awayLeague);
       submitData.append("home_team_id", formData.homeTeamId);
       submitData.append("away_team_id", formData.awayTeamId);
       submitData.append("home_team", formData.homeTeam);
       submitData.append("away_team", formData.awayTeam);
       submitData.append("score_home", formData.homeScore);
       submitData.append("score_away", formData.awayScore);
+      submitData.append("favorite_side", formData.favoriteSide);
       submitData.append("favorite_player", formData.favoritePlayer);
       submitData.append("comments", formData.comments);
 
@@ -172,7 +194,6 @@ function MatchForm() {
       );
 
       if (res.ok) {
-        const data = await res.json();
         navigate(`/trips/${tripId}/match`);
       } else {
         const errData = await res.json();
@@ -232,21 +253,31 @@ function MatchForm() {
               placeholder="Search League"
               value={formData.homeLeagueSearch}
               onChange={(e) => {
-                setFormData((prev) => ({
-                  ...prev,
-                  homeLeagueSearch: e.target.value,
-                }));
-                searchLeagues(e.target.value, setHomeLeagues);
+                const q = e.target.value;
+                setFormData((prev) => ({ ...prev, homeLeagueSearch: q }));
+                searchLeagues(q, setHomeLeagues);
               }}
               className="border rounded p-2 w-full"
             />
+
             {homeLeagues.length > 0 && (
               <select
-                onChange={(e) => {
-                  setFormData((prev) => ({ ...prev, homeLeague: e.target.value }));
-                  fetchTeams(e.target.value, setHomeTeams);
-                }}
                 className="border rounded p-2 w-full mt-2"
+                value={formData.homeLeague || ""}
+                onChange={(e) => {
+                  const leagueId = parseInt(e.target.value);
+                  const selected = allLeagues.find((l) => l.id === leagueId);
+                  setFormData((prev) => ({
+                    ...prev,
+                    homeLeague: leagueId,
+                    homeLeagueName: selected?.name || "",
+                    // reset team when league changes
+                    homeTeamId: "",
+                    homeTeam: "",
+                  }));
+                  setHomeTeams([]);
+                  if (leagueId) fetchTeams(leagueId, setHomeTeams);
+                }}
               >
                 <option value="">Select League</option>
                 {homeLeagues.map((l) => (
@@ -256,17 +287,23 @@ function MatchForm() {
                 ))}
               </select>
             )}
+
             {homeTeams.length > 0 && (
               <select
                 name="homeTeam"
-                value={formData.homeTeamId}
+                value={formData.homeTeamId || ""}
                 onChange={(e) => {
-                  const selected = homeTeams.find((t) => t.id === parseInt(e.target.value));
+                  const teamId = parseInt(e.target.value);
+                  const selected = homeTeams.find((t) => t.id === teamId);
                   setFormData((prev) => ({
                     ...prev,
                     homeTeamId: selected?.id || "",
                     homeTeam: selected?.name || "",
                   }));
+                  // Refresh players if favorite side is home
+                  if (formData.favoriteSide === "home" && teamId) {
+                    fetchPlayers(teamId);
+                  }
                 }}
                 className="border rounded p-2 w-full mt-2"
                 required={!isEditing}
@@ -289,21 +326,31 @@ function MatchForm() {
               placeholder="Search League"
               value={formData.awayLeagueSearch}
               onChange={(e) => {
-                setFormData((prev) => ({
-                  ...prev,
-                  awayLeagueSearch: e.target.value,
-                }));
-                searchLeagues(e.target.value, setAwayLeagues);
+                const q = e.target.value;
+                setFormData((prev) => ({ ...prev, awayLeagueSearch: q }));
+                searchLeagues(q, setAwayLeagues);
               }}
               className="border rounded p-2 w-full"
             />
+
             {awayLeagues.length > 0 && (
               <select
-                onChange={(e) => {
-                  setFormData((prev) => ({ ...prev, awayLeague: e.target.value }));
-                  fetchTeams(e.target.value, setAwayTeams);
-                }}
                 className="border rounded p-2 w-full mt-2"
+                value={formData.awayLeague || ""}
+                onChange={(e) => {
+                  const leagueId = parseInt(e.target.value);
+                  const selected = allLeagues.find((l) => l.id === leagueId);
+                  setFormData((prev) => ({
+                    ...prev,
+                    awayLeague: leagueId,
+                    awayLeagueName: selected?.name || "",
+                    // reset team when league changes
+                    awayTeamId: "",
+                    awayTeam: "",
+                  }));
+                  setAwayTeams([]);
+                  if (leagueId) fetchTeams(leagueId, setAwayTeams);
+                }}
               >
                 <option value="">Select League</option>
                 {awayLeagues.map((l) => (
@@ -313,17 +360,23 @@ function MatchForm() {
                 ))}
               </select>
             )}
+
             {awayTeams.length > 0 && (
               <select
                 name="awayTeam"
-                value={formData.awayTeamId}
+                value={formData.awayTeamId || ""}
                 onChange={(e) => {
-                  const selected = awayTeams.find((t) => t.id === parseInt(e.target.value));
+                  const teamId = parseInt(e.target.value);
+                  const selected = awayTeams.find((t) => t.id === teamId);
                   setFormData((prev) => ({
                     ...prev,
                     awayTeamId: selected?.id || "",
                     awayTeam: selected?.name || "",
                   }));
+                  // Refresh players if favorite side is away
+                  if (formData.favoriteSide === "away" && teamId) {
+                    fetchPlayers(teamId);
+                  }
                 }}
                 className="border rounded p-2 w-full mt-2"
                 required={!isEditing}
@@ -379,9 +432,9 @@ function MatchForm() {
                   type="radio"
                   name="favoriteSide"
                   value="home"
-                  checked={favoriteSide === "home"}
+                  checked={formData.favoriteSide === "home"}
                   onChange={() => {
-                    setFavoriteSide("home");
+                    setFormData((prev) => ({ ...prev, favoriteSide: "home" }));
                     if (formData.homeTeamId) {
                       fetchPlayers(formData.homeTeamId);
                     }
@@ -394,9 +447,9 @@ function MatchForm() {
                   type="radio"
                   name="favoriteSide"
                   value="away"
-                  checked={favoriteSide === "away"}
+                  checked={formData.favoriteSide === "away"}
                   onChange={() => {
-                    setFavoriteSide("away");
+                    setFormData((prev) => ({ ...prev, favoriteSide: "away" }));
                     if (formData.awayTeamId) {
                       fetchPlayers(formData.awayTeamId);
                     }
