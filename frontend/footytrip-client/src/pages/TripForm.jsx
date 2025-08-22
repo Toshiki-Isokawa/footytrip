@@ -12,7 +12,8 @@ function TripForm() {
   const isEditing = Boolean(id);
 
   const [photoPreview, setPhotoPreview] = useState(null);
-  const [leagues, setLeagues] = useState([]);
+  const [allLeagues, setAllLeagues] = useState([]);
+  const [leagueSearch, setLeagueSearch] = useState("");
   const [teams, setTeams] = useState([]);
   const [formData, setFormData] = useState({
     title: "",
@@ -54,9 +55,16 @@ function TripForm() {
   useEffect(() => {
     fetch("http://127.0.0.1:5000/api/leagues")
       .then(res => res.json())
-      .then(data => setLeagues(data))
+      .then(data => setAllLeagues(data))
       .catch(err => console.error("Error fetching leagues:", err));
   }, []);
+
+  // Filter leagues locally
+  const filteredLeagues = allLeagues.filter(
+    (l) =>
+      l.name.toLowerCase().includes(leagueSearch.toLowerCase()) ||
+      l.country.toLowerCase().includes(leagueSearch.toLowerCase())
+  );
 
   // Fetch teams when league changes
   useEffect(() => {
@@ -190,21 +198,34 @@ function TripForm() {
             required
           />
 
-          {/* League Dropdown */}
-          <select
-            name="league"
-            value={formData.league}
-            onChange={handleChange}
-            className="border rounded p-2 w-full"
-            required={!isEditing}
-          >
-            <option value="">Select League</option>
-            {leagues.map(league => (
-              <option key={league.id} value={league.id}>
-                {league.name}
-              </option>
-            ))}
-          </select>
+          {/* League Search + Dropdown */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">Search League</label>
+            <input
+              type="text"
+              value={leagueSearch}
+              onChange={(e) => setLeagueSearch(e.target.value)}
+              placeholder="Type to search league (e.g., Japan)"
+              className="border rounded p-2 w-full"
+            />
+
+            {filteredLeagues.length > 0 && (
+              <select
+                name="league"
+                value={formData.league}
+                onChange={handleChange}
+                className="border rounded p-2 w-full mt-2"
+                required={!isEditing}
+              >
+                <option value="">Select League</option>
+                {filteredLeagues.map((league) => (
+                  <option key={league.id} value={league.id}>
+                    {league.name} ({league.country})
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
 
           {/* Team Dropdown */}
           <select

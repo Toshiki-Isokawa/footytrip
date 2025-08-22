@@ -28,12 +28,17 @@ def create_match(trip_id):
     print("Request data:", request.form)  # Debugging line to check incoming data
 
     title = request.form.get("title")
+    home_team_league = request.form.get("home_team_league")
+    away_team_league = request.form.get("away_team_league")
+    home_team_league_id = request.form.get("home_team_league_id")
+    away_team_league_id = request.form.get("away_team_league_id")
     home_team_id = request.form.get("home_team_id")
     away_team_id = request.form.get("away_team_id")
     home_team = request.form.get("home_team")
     away_team = request.form.get("away_team")
     score_home = request.form.get("score_home")
     score_away = request.form.get("score_away")
+    favorite_side = request.form.get("favorite_side")
     favorite_players = request.form.get("favorite_player")
     comments = request.form.get("comments")
     photo = request.files.get("photo")
@@ -46,12 +51,17 @@ def create_match(trip_id):
     match = Match(
         title=title,
         trip_id=trip.trip_id,
+        home_team_league=home_team_league,
+        away_team_league=away_team_league,
+        home_team_league_id=int(home_team_league_id) if home_team_league_id else None,
+        away_team_league_id=int(away_team_league_id) if away_team_league_id else None,
         home_team_id=int(home_team_id),
         home_team=home_team,
         away_team_id=int(away_team_id),
         away_team=away_team,
         score_home=int(score_home),
         score_away=int(score_away),
+        favorite_side=favorite_side,
         favorite_players=favorite_players,
         comments=comments,
         photo=photo_filename,
@@ -80,10 +90,17 @@ def get_match(trip_id):
         "match_id": match.match_id,
         "trip_user_id": match.trip.user_id,
         "title": match.title,
+        "home_team_league": match.home_team_league,
+        "away_team_league": match.away_team_league,
+        "home_team_league_id": match.home_team_league_id,
+        "away_team_league_id": match.away_team_league_id,
         "home_team": match.home_team,
+        "home_team_id": match.home_team_id,
         "away_team": match.away_team,
+        "away_team_id": match.away_team_id,
         "score_home": match.score_home,
         "score_away": match.score_away,
+        "favorite_side": match.favorite_side,
         "favorite_player": match.favorite_players,
         "comments": match.comments,
         "photo": match.photo,
@@ -115,12 +132,17 @@ def update_match(trip_id):
         return jsonify({"msg": "No match found for this trip"}), 404
 
     title = request.form.get("title", match.title)
+    home_team_league = request.form.get("home_team_league", match.home_team_league)
+    away_team_league = request.form.get("away_team_league", match.away_team_league)
+    home_team_league_id = request.form.get("home_team_league_id", match.home_team_league_id)
+    away_team_league_id = request.form.get("away_team_league_id", match.away_team_league_id)
     home_team_id = request.form.get("home_team_id", match.home_team_id)
     away_team_id = request.form.get("away_team_id", match.away_team_id)
     home_team = request.form.get("home_team", match.home_team)
     away_team = request.form.get("away_team", match.away_team)
     score_home = request.form.get("score_home", match.score_home)
     score_away = request.form.get("score_away", match.score_away)
+    favorite_side = request.form.get("favorite_side", match.favorite_side)
     favorite_players = request.form.get("favorite_player", match.favorite_players)
     comments = request.form.get("comments", match.comments)
     photo = request.files.get("photo")
@@ -128,12 +150,17 @@ def update_match(trip_id):
     photo_filename = save_uploaded_file(photo, subdir="trips") if photo else match.photo
 
     match.title = title
+    match.home_team_league = home_team_league
+    match.away_team_league = away_team_league
+    match.home_team_league_id = int(home_team_league_id) if home_team_league_id else match.home_team_league_id
+    match.away_team_league_id = int(away_team_league_id) if away_team_league_id else match.away_team_league_id
     match.home_team_id = int(home_team_id) if home_team_id else match.home_team_id
     match.away_team_id = int(away_team_id) if away_team_id else match
     match.home_team = home_team
     match.away_team = away_team
     match.score_home = int(score_home) if score_home is not None else match.score_home
     match.score_away = int(score_away) if score_away is not None else match.score_away
+    match.favorite_side = favorite_side
     match.favorite_players = favorite_players
     match.comments = comments
     match.photo = photo_filename
