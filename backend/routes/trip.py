@@ -71,27 +71,6 @@ def get_trip(trip_id):
 
 
 # -----------------------------
-# GET /api/users/<id>/trips
-# -----------------------------
-@trip_bp.route("/users/<int:user_id>/trips", methods=["GET"])
-def get_user_trips(user_id):
-    trips = Trip.query.filter_by(user_id=user_id).order_by(Trip.date.desc()).all()
-    return jsonify([
-        {
-            "trip_id": t.trip_id,
-            "title": t.title,
-            "photo": t.photo,
-            "country": t.country,
-            "city": t.city,
-            "stadium": t.stadium,
-            "date": t.date.isoformat(),
-            "comments": t.comments,
-        }
-        for t in trips
-    ]), 200
-
-
-# -----------------------------
 # GET /api/users/<id>/feed
 # -----------------------------
 @trip_bp.route("/users/<int:user_id>/feed", methods=["GET"])
@@ -165,31 +144,6 @@ def unfavorite_trip(trip_id):
     db.session.delete(fav)
     db.session.commit()
     return jsonify({"msg": "Unfavorited"}), 200
-
-
-# -----------------------------
-# GET /api/users/<id>/favorites
-# -----------------------------
-@trip_bp.route("/users/<int:user_id>/favorites", methods=["GET"])
-def get_user_favorites(user_id):
-    favorites = Favorite.query.filter_by(user_id=user_id).all()
-    trip_ids = [f.trip_id for f in favorites]
-
-    trips = Trip.query.filter(Trip.trip_id.in_(trip_ids)).all()
-    return jsonify([
-        {
-            "trip_id": t.trip_id,
-            "title": t.title,
-            "photo": t.photo,
-            "country": t.country,
-            "city": t.city,
-            "stadium": t.stadium,
-            "date": t.date.isoformat(),
-            "comments": t.comments,
-        }
-        for t in trips
-    ]), 200
-
 
 # -----------------------------
 # PUT /api/trips/<id>
