@@ -10,6 +10,7 @@ import Trip from "./pages/Trips";
 import TripForm from "./pages/TripForm";
 import TripDetail from "./pages/TripDetail";
 import MatchForm from "./pages/MatchForm";
+import FindFooty from "./pages/FindFooty";
 import { AuthProvider } from "./contexts/AuthContext"; // Import AuthProvider
 import MatchDetail from "./pages/MatchDetail";
 
@@ -31,6 +32,7 @@ function App() {
           <Route path="/trips/:tripId/match/new" element={<MatchForm />} />
           <Route path="/trips/:tripId/match/" element={<MatchDetail />} />
           <Route path="/trips/:tripId/match/edit" element={<MatchForm />} />
+          <Route path="/find" element={<FindFooty />} />
         </Routes>
       </Router>
     </AuthProvider>
