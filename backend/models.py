@@ -37,6 +37,10 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     edited_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
+    following = db.relationship("Follow", foreign_keys="Follow.follower_id", backref="follower", lazy="dynamic", cascade="all, delete-orphan")
+    followers = db.relationship("Follow", foreign_keys="Follow.followed_id", backref="followed", lazy="dynamic", cascade="all, delete-orphan")
+    favorites = db.relationship("Favorite", backref="user", cascade="all, delete-orphan", lazy="dynamic")
+    
     def __repr__(self):
         return f"<User {self.name}>"
 
@@ -71,12 +75,18 @@ class Follow(db.Model):
     followed_id = db.Column(db.Integer, db.ForeignKey("user.user_id"), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
+    __table_args__ = (db.UniqueConstraint("follower_id", "followed_id", name="unique_follow"),)
+
+
 class Favorite(db.Model):
     __tablename__ = "favorites"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.user_id"), nullable=False)
     trip_id = db.Column(db.Integer, db.ForeignKey("trip.trip_id", ondelete="CASCADE"), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (db.UniqueConstraint("user_id", "trip_id", name="unique_favorite"),)
+
 
 
 class Match(db.Model):
