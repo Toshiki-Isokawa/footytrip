@@ -13,7 +13,7 @@ def get_users():
     users = User.query.all()
     data = [
         {
-            "id": u.user_id,
+            "user_id": u.user_id,
             "name": u.name,
             "profile": u.profile,
             "fav_team": u.fav_team,
