@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useContext } from "react";
 import { AuthContext } from "../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import NaviBar from "../components/NaviBar";
 
 function FindFooty() {
   const { token } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   const [allUsers, setAllUsers] = useState([]);
   const [loggedInUser, setLoggedInUser] = useState("");
@@ -87,6 +89,7 @@ function FindFooty() {
               {filteredUsers.map((u) => (
                 <div
                   key={u.user_id}
+                  onClick={() => navigate(`/footy/${u.user_id}`)}
                   className="flex flex-col items-center p-3 border rounded shadow-sm"
                 >
                   <img
@@ -115,6 +118,7 @@ function FindFooty() {
               {sameFavPlayer.map((u) => (
                 <div
                   key={u.user_id}
+                  onClick={() => navigate(`/footy/${u.user_id}`)}
                   className="flex-shrink-0 w-28 flex flex-col items-center p-2 border rounded"
                 >
                   <img
@@ -143,6 +147,7 @@ function FindFooty() {
               {sameFavTeam.map((u) => (
                 <div
                   key={u.user_id}
+                  onClick={() => navigate(`/footy/${u.user_id}`)}
                   className="flex-shrink-0 w-28 flex flex-col items-center p-2 border rounded"
                 >
                   <img
