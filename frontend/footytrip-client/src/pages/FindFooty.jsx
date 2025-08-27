@@ -95,7 +95,7 @@ function FindFooty() {
                   <img
                     src={
                       u.profile
-                        ? `http://127.0.0.1:5000/static/profiles/${u.profile}`
+                        ? `http://127.0.0.1:5000/static/uploads/profiles/${u.profile}`
                         : "/default-avatar.png"
                     }
                     alt={u.name}
@@ -124,7 +124,7 @@ function FindFooty() {
                   <img
                     src={
                       u.profile
-                        ? `http://127.0.0.1:5000/static/profiles/${u.profile}`
+                        ? `http://127.0.0.1:5000/static/uploads/profiles/${u.profile}`
                         : "/default-avatar.png"
                     }
                     alt={u.name}
@@ -153,7 +153,7 @@ function FindFooty() {
                   <img
                     src={
                       u.profile
-                        ? `http://127.0.0.1:5000/static/profiles/${u.profile}`
+                        ? `http://127.0.0.1:5000/static/uploads/profiles/${u.profile}`
                         : "/default-avatar.png"
                     }
                     alt={u.name}

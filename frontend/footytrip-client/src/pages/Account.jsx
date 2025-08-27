@@ -22,7 +22,7 @@ function Account() {
     const [favPlayer, setFavPlayer] = useState("");
     const [profileImage, setProfileImage] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(
-        user.profile ? `http://127.0.0.1:5000/static/uploads/profiles/${user.profile}` : null
+        user.profile ? `http://127.0.0.1:5000/static/profiles/${user.profile}` : null
         );
     const navigate = useNavigate();
     const from = location.state?.from || "/";
@@ -50,7 +50,7 @@ function Account() {
         })
         .then(res => res.json())
         .then(data => {
-            if(data.user) {
+            if(data.user && data.user.name) {
                 const dobRaw = data.user.date_of_birth;
                 const dobFormatted = dobRaw ? new Date(dobRaw).toISOString().split("T")[0] : "";
                 setIsEditing(true);
