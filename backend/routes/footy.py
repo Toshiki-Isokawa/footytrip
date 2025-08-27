@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, User, Follow, Trip, Favorite
+from utils import get_current_user
 
 footy_bp = Blueprint("footy", __name__, url_prefix="/api")
 
@@ -42,6 +43,7 @@ def get_user_detail(user_id):
         "fav_team": user.fav_team,
         "fav_player": user.fav_player,
         "date_of_birth": user.date_of_birth.isoformat(),
+        "point": user.point,
         "followers_count": followers_count,
         "following_count": following_count,
     }
@@ -54,8 +56,7 @@ def get_user_detail(user_id):
 @footy_bp.route("/follow/<int:user_id>", methods=["POST"])
 @jwt_required()
 def follow_user(user_id):
-    current_email = get_jwt_identity()
-    current_user = User.query.filter_by(email=current_email).first()
+    current_user = get_current_user()
     if not current_user:
         return jsonify({"msg": "User not found"}), 404
 
@@ -79,8 +80,7 @@ def follow_user(user_id):
 @footy_bp.route("/follow/<int:user_id>", methods=["DELETE"])
 @jwt_required()
 def unfollow_user(user_id):
-    current_email = get_jwt_identity()
-    current_user = User.query.filter_by(email=current_email).first()
+    current_user = get_current_user()
     if not current_user:
         return jsonify({"msg": "User not found"}), 404
 
