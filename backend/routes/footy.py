@@ -41,6 +41,7 @@ def get_user_detail(user_id):
         "profile": user.profile,
         "fav_team": user.fav_team,
         "fav_player": user.fav_player,
+        "date_of_birth": user.date_of_birth.isoformat(),
         "followers_count": followers_count,
         "following_count": following_count,
     }
