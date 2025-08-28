@@ -10,6 +10,7 @@ from routes.auth import auth_bp
 from routes.user import user_bp
 from routes.match import match_bp
 from routes.footy import footy_bp
+from routes.schedule import schedule_bp
 
 def create_app():
     app = Flask(__name__)
@@ -33,6 +34,7 @@ def create_app():
     app.register_blueprint(trip_bp)
     app.register_blueprint(match_bp)
     app.register_blueprint(footy_bp)
+    app.register_blueprint(schedule_bp)
 
     return app
 

@@ -112,3 +112,11 @@ class Match(db.Model):
     edited_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     trip = db.relationship("Trip", back_populates="match", uselist=False)
+
+
+class TeamLogo(db.Model):
+    __tablename__ = "team_logos"
+    team_id = db.Column(db.Integer, primary_key=True)
+    team_name = db.Column(db.String(255))
+    logo_url = db.Column(db.Text, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
