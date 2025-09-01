@@ -120,3 +120,53 @@ class TeamLogo(db.Model):
     team_name = db.Column(db.String(255))
     logo_url = db.Column(db.Text, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
+class Prediction(db.Model):
+    __tablename__ = "prediction"
+
+    prediction_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.user_id"), nullable=False)
+    week = db.Column(db.Integer, nullable=False)
+
+    # Match 1
+    match_one_id = db.Column(db.Integer, nullable=True)
+    match_one_home = db.Column(db.String, nullable=True)
+    match_one_home_id = db.Column(db.Integer, nullable=True)
+    match_one_away = db.Column(db.String, nullable=True)
+    match_one_away_id = db.Column(db.Integer, nullable=True)
+    match_one_prediction = db.Column(db.String, nullable=True)
+    match_one_point = db.Column(db.Integer, default=0)
+
+    # Match 2
+    match_two_id = db.Column(db.Integer, nullable=True)
+    match_two_home = db.Column(db.String, nullable=True)
+    match_two_home_id = db.Column(db.Integer, nullable=True)
+    match_two_away = db.Column(db.String, nullable=True)
+    match_two_away_id = db.Column(db.Integer, nullable=True)
+    match_two_prediction = db.Column(db.String, nullable=True)
+    match_two_point = db.Column(db.Integer, default=0)
+
+    # Match 3
+    match_three_id = db.Column(db.Integer, nullable=True)
+    match_three_home = db.Column(db.String, nullable=True)
+    match_three_home_id = db.Column(db.Integer, nullable=True)
+    match_three_away = db.Column(db.String, nullable=True)
+    match_three_away_id = db.Column(db.Integer, nullable=True)
+    match_three_prediction = db.Column(db.String, nullable=True)
+    match_three_point = db.Column(db.Integer, default=0)
+
+    # Total points & bonus
+    bonus_awarded = db.Column(db.Boolean, default=False)
+    obtained_points = db.Column(db.Integer, default=0)
+
+    # Status of prediction
+    status = db.Column(db.String, default="pending")  # pending | locked | scored
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        db.Index("idx_user_week", "user_id", "week"),
+    )
