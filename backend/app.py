@@ -5,12 +5,14 @@ import os
 from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, verify_jwt_in_request
 from extensions import db, bcrypt, jwt
+from utils import schedule_jobs
 from routes.trip import trip_bp
 from routes.auth import auth_bp
 from routes.user import user_bp
 from routes.match import match_bp
 from routes.footy import footy_bp
 from routes.schedule import schedule_bp
+from routes.prediction import prediction_bp
 
 def create_app():
     app = Flask(__name__)
@@ -27,6 +29,7 @@ def create_app():
     bcrypt.init_app(app)
     jwt.init_app(app)
     migrate = Migrate(app, db)
+    schedule_jobs(app)
 
     # Routes
     app.register_blueprint(auth_bp)
@@ -35,6 +38,7 @@ def create_app():
     app.register_blueprint(match_bp)
     app.register_blueprint(footy_bp)
     app.register_blueprint(schedule_bp)
+    app.register_blueprint(prediction_bp)
 
     return app
 

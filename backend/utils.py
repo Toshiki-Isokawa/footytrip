@@ -3,6 +3,9 @@ import os
 import uuid
 from werkzeug.utils import secure_filename
 from flask_jwt_extended import get_jwt_identity
+from apscheduler.schedulers.background import BackgroundScheduler
+from routes.prediction import lock_predictions, calculate_weekly_points
+from flask import current_app
 from models import UserLogin, User
 
 ALLOWED_EXT = {"png", "jpg", "jpeg", "gif"}
@@ -32,3 +35,36 @@ def get_current_user():
     if not user_login:
         return None
     return User.query.filter_by(user_id=user_login.user_id).first()
+
+
+def schedule_jobs(app):
+    scheduler = BackgroundScheduler()
+
+    def lock_predictions_job():
+        with app.app_context():
+            lock_predictions()
+            current_app.logger.info("Predictions locked by scheduler")
+
+    scheduler.add_job(
+        func=lock_predictions_job,
+        trigger="cron",
+        day_of_week="fri",
+        hour=0,
+        minute=0
+    )
+
+    def calculate_points_job():
+        with app.app_context():
+            calculate_weekly_points()
+            current_app.logger.info("Weekly points calculated by scheduler")
+
+    scheduler.add_job(
+        func=calculate_points_job,
+        trigger="cron",
+        day_of_week="mon",
+        hour=0,
+        minute=0
+    )
+
+    scheduler.start()
+
