@@ -1,6 +1,6 @@
 import os
 from flask import Blueprint, request, jsonify
-from datetime import datetime
+from datetime import datetime, timedelta
 from models import db, Prediction, PredictionMatch, User
 from routes.predictionMatch import fetch_match_result
 from math import floor
@@ -289,3 +289,55 @@ def overall_leaderboard():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@prediction_bp.route("/available-matches", methods=["GET"])
+def get_available_matches():
+    today = datetime.utcnow()
+    # Get upcoming Friday to Sunday
+    # weekday(): Monday=0 ... Sunday=6
+    friday_offset = (4 - today.weekday()) % 7
+    friday = today + timedelta(days=friday_offset)
+    saturday = friday + timedelta(days=1)
+    sunday = friday + timedelta(days=2)
+    
+    # List of dates in YYYYMMDD format
+    date_list = [friday.strftime("%Y%m%d"), saturday.strftime("%Y%m%d"), sunday.strftime("%Y%m%d")]
+
+    matches_out = []
+
+    try:
+        for date_str in date_list:
+            res = requests.get(
+                f"https://{RAPIDAPI_HOST}/football-get-matches-by-date",
+                headers=HEADERS,
+                params={"date": date_str}
+            )
+            res.raise_for_status()
+            data = res.json()
+
+            for match in data.get("response", {}).get("matches", []):
+                status_info = match.get("status", {})
+                # Only include matches that haven't started yet
+                if status_info.get("started") or status_info.get("finished"):
+                    continue
+
+                matches_out.append({
+                    "match_id": match.get("id"),
+                    "league_id": match.get("leagueId"),
+                    "home_team": {
+                        "id": match["home"]["id"],
+                        "name": match["home"]["name"],
+                        "logo": match["home"].get("imageUrl")  # team logo
+                    },
+                    "away_team": {
+                        "id": match["away"]["id"],
+                        "name": match["away"]["name"],
+                        "logo": match["away"].get("imageUrl")
+                    },
+                    "kickoff_time": match.get("time")
+                })
+
+        return jsonify({"status": "success", "matches": matches_out}), 200
+
+    except requests.exceptions.RequestException as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
