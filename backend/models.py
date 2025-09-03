@@ -129,44 +129,40 @@ class Prediction(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.user_id"), nullable=False)
     week = db.Column(db.Integer, nullable=False)
 
-    # Match 1
-    match_one_id = db.Column(db.Integer, nullable=True)
-    match_one_home = db.Column(db.String, nullable=True)
-    match_one_home_id = db.Column(db.Integer, nullable=True)
-    match_one_away = db.Column(db.String, nullable=True)
-    match_one_away_id = db.Column(db.Integer, nullable=True)
-    match_one_prediction = db.Column(db.String, nullable=True)
-    match_one_point = db.Column(db.Integer, default=0)
-
-    # Match 2
-    match_two_id = db.Column(db.Integer, nullable=True)
-    match_two_home = db.Column(db.String, nullable=True)
-    match_two_home_id = db.Column(db.Integer, nullable=True)
-    match_two_away = db.Column(db.String, nullable=True)
-    match_two_away_id = db.Column(db.Integer, nullable=True)
-    match_two_prediction = db.Column(db.String, nullable=True)
-    match_two_point = db.Column(db.Integer, default=0)
-
-    # Match 3
-    match_three_id = db.Column(db.Integer, nullable=True)
-    match_three_home = db.Column(db.String, nullable=True)
-    match_three_home_id = db.Column(db.Integer, nullable=True)
-    match_three_away = db.Column(db.String, nullable=True)
-    match_three_away_id = db.Column(db.Integer, nullable=True)
-    match_three_prediction = db.Column(db.String, nullable=True)
-    match_three_point = db.Column(db.Integer, default=0)
-
-    # Total points & bonus
-    bonus_awarded = db.Column(db.Boolean, default=False)
+    # Total points for the week
     obtained_points = db.Column(db.Integer, default=0)
 
-    # Status of prediction
     status = db.Column(db.String, default="pending")  # pending | locked | scored
 
-    # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     __table_args__ = (
         db.Index("idx_user_week", "user_id", "week"),
     )
+
+
+class PredictionMatch(db.Model):
+    __tablename__ = "prediction_match"
+
+    id = db.Column(db.Integer, primary_key=True)
+    prediction_id = db.Column(db.Integer, db.ForeignKey("prediction.prediction_id"), nullable=False)
+
+    match_id = db.Column(db.Integer, nullable=False)
+    home_team = db.Column(db.String, nullable=False)
+    home_team_id = db.Column(db.Integer, nullable=False)
+    away_team = db.Column(db.String, nullable=False)
+    away_team_id = db.Column(db.Integer, nullable=False)
+
+    # Multi-factor predictions
+    result_prediction = db.Column(db.String, nullable=False)   # "home", "away", "draw"
+    score_home_prediction = db.Column(db.Integer, nullable=True)
+    score_away_prediction = db.Column(db.Integer, nullable=True)
+    total_goals_prediction = db.Column(db.Integer, nullable=True)
+    red_card_prediction = db.Column(db.Boolean, nullable=True)
+
+    # Points earned for this match
+    obtained_points = db.Column(db.Integer, default=0)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

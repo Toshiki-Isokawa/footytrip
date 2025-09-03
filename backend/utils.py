@@ -4,7 +4,7 @@ import uuid
 from werkzeug.utils import secure_filename
 from flask_jwt_extended import get_jwt_identity
 from apscheduler.schedulers.background import BackgroundScheduler
-from routes.prediction import lock_predictions, calculate_weekly_points
+from routes.predictionMatch import lock_predictions, calculate_weekly_points
 from flask import current_app
 from models import UserLogin, User
 
@@ -40,31 +40,29 @@ def get_current_user():
 def schedule_jobs(app):
     scheduler = BackgroundScheduler()
 
-    def lock_predictions_job():
+    # Lock predictions every Friday 00:00
+    def lock_job():
         with app.app_context():
-            lock_predictions()
-            current_app.logger.info("Predictions locked by scheduler")
+            try:
+                response = app.test_client().post("/api/prediction/lock")
+                if response.status_code != 200:
+                    app.logger.error(f"Lock predictions failed: {response.get_json()}")
+            except Exception as e:
+                app.logger.exception("Unexpected error in scheduled lock_predictions")
 
-    scheduler.add_job(
-        func=lock_predictions_job,
-        trigger="cron",
-        day_of_week="fri",
-        hour=0,
-        minute=0
-    )
+    scheduler.add_job(lock_job, trigger="cron", day_of_week="fri", hour=0, minute=0)
 
-    def calculate_points_job():
+    # Calculate weekly points every Monday 00:00
+    def calc_points_job():
         with app.app_context():
-            calculate_weekly_points()
-            current_app.logger.info("Weekly points calculated by scheduler")
+            try:
+                response = app.test_client().post("/api/prediction/calc-points")
+                if response.status_code != 200:
+                    app.logger.error(f"Weekly points calculation failed: {response.get_json()}")
+            except Exception as e:
+                app.logger.exception("Unexpected error in scheduled calculate_weekly_points")
 
-    scheduler.add_job(
-        func=calculate_points_job,
-        trigger="cron",
-        day_of_week="mon",
-        hour=0,
-        minute=0
-    )
+    scheduler.add_job(calc_points_job, trigger="cron", day_of_week="mon", hour=0, minute=0)
 
     scheduler.start()
 

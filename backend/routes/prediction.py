@@ -1,6 +1,8 @@
+import os
 from flask import Blueprint, request, jsonify
 from datetime import datetime
-from models import db, Prediction, User
+from models import db, Prediction, PredictionMatch, User
+from routes.predictionMatch import fetch_match_result
 from math import floor
 from sqlalchemy import func, desc
 import requests
@@ -8,8 +10,8 @@ import requests
 
 prediction_bp = Blueprint("prediction", __name__, url_prefix="/api/predictions")
 
-RAPIDAPI_HOST = "free-api-live-football-data.p.rapidapi.com"
-RAPIDAPI_KEY = "YOUR_RAPIDAPI_KEY"
+RAPIDAPI_HOST = os.getenv("RAPIDAPI_HOST")
+RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY")
 HEADERS = {
     "x-rapidapi-host": RAPIDAPI_HOST,
     "x-rapidapi-key": RAPIDAPI_KEY,
@@ -23,412 +25,207 @@ def get_week_number(date: datetime):
 
 @prediction_bp.route("/create", methods=["POST"])
 def create_prediction():
-    """
-    Create a new prediction for the user.
-    Request JSON should include:
-    {
-        "user_id": 123,
-        "matches": [
-            {
-                "event_id": 4694674,
-                "home_id": 10235,
-                "home_name": "Feyenoord",
-                "away_id": 10013,
-                "away_name": "Salzburg",
-                "prediction": "home"
-            },
-            ...
-        ]
-    }
-    """
-    data = request.get_json()
+    data = request.get_json() or {}
     user_id = data.get("user_id")
     matches = data.get("matches", [])
 
-    # Validation 1: 1-3 matches
-    if not matches or len(matches) > 3:
-        return jsonify({"error": "You must select 1 to 3 matches"}), 400
+    if not user_id:
+        return jsonify({"error": "user_id is required"}), 400
 
-    # Validation 2: Prediction period (Monday-Thursday)
+    if not matches or not (1 <= len(matches) <= 3):
+        return jsonify({"error": "You must submit between 1 and 3 matches"}), 400
+
     now = datetime.utcnow()
-    if now.weekday() > 3:  # 0=Monday, 3=Thursday
+    if now.weekday() > 3:
         return jsonify({"error": "Predictions can only be submitted Monday to Thursday"}), 400
 
-    # Validation 3: No existing prediction for the week
     week_number = get_week_number(now)
     existing = Prediction.query.filter_by(user_id=user_id, week=week_number).first()
     if existing:
         return jsonify({"error": "Prediction for this week already exists. Use update API"}), 400
 
-    # Validation 4: Each match must not have started yet
+    # validate each match via match-status API and required fields
     for m in matches:
-        event_id = m.get("event_id")
-        # Fetch match info from schedule API
+        match_id = m.get("match_id") or m.get("event_id")
+        home_team = m.get("home_team") or m.get("home_name")
+        home_team_id = m.get("home_team_id") or m.get("home_id")
+        away_team = m.get("away_team") or m.get("away_name")
+        away_team_id = m.get("away_team_id") or m.get("away_id")
+        result_prediction = m.get("result_prediction")
+
+        if not match_id or not home_team or not home_team_id or not away_team or not away_team_id or not result_prediction:
+            return jsonify({"error": "Each match must include match_id, home_team(+id), away_team(+id), and result_prediction"}), 400
+
         try:
-            date_str = now.strftime("%Y%m%d")
             res = requests.get(
-                f"https://{RAPIDAPI_HOST}/football-get-matches-by-date",
+                f"https://{RAPIDAPI_HOST}/football-get-match-status",
                 headers=HEADERS,
-                params={"date": date_str}
+                params={"eventid": match_id}
             )
             res.raise_for_status()
-            schedule_data = res.json()
-            match_info = next(
-                (x for x in schedule_data.get("response", {}).get("matches", []) if x["id"] == event_id),
-                None
-            )
-            if not match_info:
-                return jsonify({"error": f"Match {event_id} not found"}), 400
-
-            status_info = match_info.get("status", {})
+            body = res.json()
+            status_info = body.get("response", {}).get("status", {})
             if status_info.get("started") or status_info.get("finished"):
-                return jsonify({"error": f"Match {event_id} already started or finished"}), 400
+                return jsonify({"error": f"Match {match_id} already started or finished"}), 400
         except requests.exceptions.RequestException as e:
-            return jsonify({"error": f"Failed to validate match {event_id}: {str(e)}"}), 500
+            return jsonify({"error": f"Failed to validate match {match_id}: {str(e)}"}), 500
 
-    # Create Prediction object
-    pred = Prediction(
-        user_id=user_id,
-        week=week_number,
-        status="pending"
-    )
+    # create prediction row
+    prediction = Prediction(user_id=user_id, week=week_number, status="pending")
+    db.session.add(prediction)
+    db.session.flush()
 
-    # Map matches to DB columns
-    match_fields = ["one", "two", "three"]
-    for idx, m in enumerate(matches):
-        key = match_fields[idx]
-        setattr(pred, f"match_{key}_id", m.get("event_id"))
-        setattr(pred, f"match_{key}_home", m.get("home_name"))
-        setattr(pred, f"match_{key}_home_id", m.get("home_id"))
-        setattr(pred, f"match_{key}_away", m.get("away_name"))
-        setattr(pred, f"match_{key}_away_id", m.get("away_id"))
-        setattr(pred, f"match_{key}_prediction", m.get("prediction"))
+    # insert prediction_match rows
+    for m in matches:
+        match_id = m.get("match_id") or m.get("event_id")
+        home_team = m.get("home_team") or m.get("home_name")
+        home_team_id = m.get("home_team_id") or m.get("home_id")
+        away_team = m.get("away_team") or m.get("away_name")
+        away_team_id = m.get("away_team_id") or m.get("away_id")
 
-    db.session.add(pred)
+        pm = PredictionMatch(
+            prediction_id=prediction.prediction_id,
+            match_id=match_id,
+            home_team=home_team,
+            home_team_id=home_team_id,
+            away_team=away_team,
+            away_team_id=away_team_id,
+            result_prediction=m.get("result_prediction"),
+            score_home_prediction=m.get("score_home_prediction"),
+            score_away_prediction=m.get("score_away_prediction"),
+            total_goals_prediction=m.get("total_goals_prediction"),
+            red_card_prediction=bool(m.get("red_card_prediction")) if m.get("red_card_prediction") is not None else None
+        )
+        db.session.add(pm)
+
     db.session.commit()
-
     return jsonify({"status": "success", "message": "Prediction created successfully"}), 200
 
 
 @prediction_bp.route("/update", methods=["PUT"])
 def update_prediction():
-    """
-    Update an existing prediction for the user.
-    Request JSON should include:
-    {
-        "user_id": 123,
-        "matches": [
-            {
-                "event_id": 4694674,
-                "home_id": 10235,
-                "home_name": "Feyenoord",
-                "away_id": 10013,
-                "away_name": "Salzburg",
-                "prediction": "home"
-            },
-            ...
-        ]
-    }
-    """
-    data = request.get_json()
+    data = request.get_json() or {}
     user_id = data.get("user_id")
     matches = data.get("matches", [])
 
-    # Validation 1: 1-3 matches
-    if not matches or len(matches) > 3:
-        return jsonify({"error": "You must select 1 to 3 matches"}), 400
+    if not user_id:
+        return jsonify({"error": "user_id is required"}), 400
 
-    # Validation 2: Prediction period (Monday-Thursday)
+    if not matches or not (1 <= len(matches) <= 3):
+        return jsonify({"error": "You must submit between 1 and 3 matches"}), 400
+
     now = datetime.utcnow()
-    if now.weekday() > 3:  # 0=Monday, 3=Thursday
+    if now.weekday() > 3:
         return jsonify({"error": "Predictions can only be updated Monday to Thursday"}), 400
 
     week_number = get_week_number(now)
-
-    # Validation 3: Existing prediction must exist
     prediction = Prediction.query.filter_by(user_id=user_id, week=week_number).first()
     if not prediction:
-        return jsonify({"error": "No existing prediction found for this week"}), 404
+        return jsonify({"error": "No existing prediction for this week"}), 404
 
-    # Validation 4: Check matches have not started yet
+    if prediction.status != "pending":
+        return jsonify({"error": "Prediction already locked or scored and cannot be updated"}), 400
+
     for m in matches:
-        event_id = m.get("event_id")
+        match_id = m.get("match_id") or m.get("event_id")
         try:
-            date_str = now.strftime("%Y%m%d")
             res = requests.get(
-                f"https://{RAPIDAPI_HOST}/football-get-matches-by-date",
+                f"https://{RAPIDAPI_HOST}/football-get-match-status",
                 headers=HEADERS,
-                params={"date": date_str}
+                params={"eventid": match_id}
             )
             res.raise_for_status()
-            schedule_data = res.json()
-            match_info = next(
-                (x for x in schedule_data.get("response", {}).get("matches", []) if x["id"] == event_id),
-                None
-            )
-            if not match_info:
-                return jsonify({"error": f"Match {event_id} not found"}), 400
-
-            status_info = match_info.get("status", {})
+            body = res.json()
+            status_info = body.get("response", {}).get("status", {})
             if status_info.get("started") or status_info.get("finished"):
-                return jsonify({"error": f"Match {event_id} already started or finished"}), 400
+                return jsonify({"error": f"Match {match_id} already started or finished"}), 400
         except requests.exceptions.RequestException as e:
-            return jsonify({"error": f"Failed to validate match {event_id}: {str(e)}"}), 500
+            return jsonify({"error": f"Failed to validate match {match_id}: {str(e)}"}), 500
 
-    # Update prediction fields
-    match_fields = ["one", "two", "three"]
-    for idx, m in enumerate(matches):
-        key = match_fields[idx]
-        setattr(prediction, f"match_{key}_id", m.get("event_id"))
-        setattr(prediction, f"match_{key}_home", m.get("home_name"))
-        setattr(prediction, f"match_{key}_home_id", m.get("home_id"))
-        setattr(prediction, f"match_{key}_away", m.get("away_name"))
-        setattr(prediction, f"match_{key}_away_id", m.get("away_id"))
-        setattr(prediction, f"match_{key}_prediction", m.get("prediction"))
+    PredictionMatch.query.filter_by(prediction_id=prediction.prediction_id).delete()
+    db.session.flush()
+
+    for m in matches:
+        match_id = m.get("match_id") or m.get("event_id")
+        home_team = m.get("home_team") or m.get("home_name")
+        home_team_id = m.get("home_team_id") or m.get("home_id")
+        away_team = m.get("away_team") or m.get("away_name")
+        away_team_id = m.get("away_team_id") or m.get("away_id")
+
+        pm = PredictionMatch(
+            prediction_id=prediction.prediction_id,
+            match_id=match_id,
+            home_team=home_team,
+            home_team_id=home_team_id,
+            away_team=away_team,
+            away_team_id=away_team_id,
+            result_prediction=m.get("result_prediction"),
+            score_home_prediction=m.get("score_home_prediction"),
+            score_away_prediction=m.get("score_away_prediction"),
+            total_goals_prediction=m.get("total_goals_prediction"),
+            red_card_prediction=bool(m.get("red_card_prediction")) if m.get("red_card_prediction") is not None else None
+        )
+        db.session.add(pm)
 
     prediction.updated_at = datetime.utcnow()
-
     db.session.commit()
-
     return jsonify({"status": "success", "message": "Prediction updated successfully"}), 200
 
 
 @prediction_bp.route("/fetch", methods=["GET"])
 def fetch_prediction():
-    """
-    Fetch a user's predictions for a given week.
-    Query params:
-      - user_id (required)
-      - week (optional, defaults to current week)
-    Response: user's predictions for up to 3 matches (and points if scored).
-    """
     user_id = request.args.get("user_id", type=int)
     week = request.args.get("week", type=int)
 
     if not user_id:
         return jsonify({"error": "user_id is required"}), 400
 
-    # Default to current week
     if not week:
         week = get_week_number(datetime.utcnow())
 
     prediction = Prediction.query.filter_by(user_id=user_id, week=week).first()
     if not prediction:
-        return jsonify({"error": "No predictions found for this week"}), 404
+        return jsonify({"error": "No prediction found for this user/week"}), 404
 
-    response = {
-        "user_id": user_id,
-        "week": week,
-        "status": prediction.status,
-        "matches": []
-    }
+    matches = PredictionMatch.query.filter_by(prediction_id=prediction.prediction_id).all()
+    matches_out = []
 
-    # Helper function to build match response
-    def build_match(event_id, home_id, home_name, away_id, away_name, pred, points):
-        match_data = {
-            "event_id": event_id,
-            "home_id": home_id,
-            "home_name": home_name,
-            "away_id": away_id,
-            "away_name": away_name,
-            "prediction": pred
+    for m in matches:
+        item = {
+            "match_id": m.match_id,
+            "home_team": {"id": m.home_team_id, "name": m.home_team},
+            "away_team": {"id": m.away_team_id, "name": m.away_team},
+            "result_prediction": m.result_prediction,
+            "score_home_prediction": m.score_home_prediction,
+            "score_away_prediction": m.score_away_prediction,
+            "total_goals_prediction": m.total_goals_prediction,
+            "red_card_prediction": m.red_card_prediction
         }
-        # Only include points if status == "scored"
+
         if prediction.status == "scored":
-            match_data["points"] = points
-        return match_data
+            item["obtained_points"] = m.obtained_points
+            try:
+                actual_result = fetch_match_result(m.match_id)
+                item["score_home_actual"] = actual_result["home_score"]
+                item["score_away_actual"] = actual_result["away_score"]
+            except Exception as e:
+                item["score_home_actual"] = None
+                item["score_away_actual"] = None
 
-    # Add match one
-    if prediction.match_one_id:
-        response["matches"].append(build_match(
-            prediction.match_one_id,
-            prediction.match_one_home_id,
-            prediction.match_one_home,
-            prediction.match_one_away_id,
-            prediction.match_one_away,
-            prediction.match_one_prediction,
-            prediction.match_one_point
-        ))
+        matches_out.append(item)
 
-    # Add match two
-    if prediction.match_two_id:
-        response["matches"].append(build_match(
-            prediction.match_two_id,
-            prediction.match_two_home_id,
-            prediction.match_two_home,
-            prediction.match_two_away_id,
-            prediction.match_two_away,
-            prediction.match_two_prediction,
-            prediction.match_two_point
-        ))
+    resp = {
+        "user_id": user_id,
+        "week": prediction.week,
+        "status": prediction.status,
+        "matches": matches_out
+    }
 
-    # Add match three
-    if prediction.match_three_id:
-        response["matches"].append(build_match(
-            prediction.match_three_id,
-            prediction.match_three_home_id,
-            prediction.match_three_home,
-            prediction.match_three_away_id,
-            prediction.match_three_away,
-            prediction.match_three_prediction,
-            prediction.match_three_point
-        ))
-
-    # Add total points + bonus if scored
     if prediction.status == "scored":
-        response["total_points"] = prediction.obtained_points
-        response["bonus"] = prediction.bonus
+        resp["obtained_points"] = prediction.obtained_points
+        # resp["bonus_awarded"] = prediction.bonus_awarded
 
-    return jsonify(response), 200
-
-
-@prediction_bp.route("/lock", methods=["POST"])
-def lock_predictions():
-    """
-    Lock all predictions for the current week.
-    Should run every Friday at 00:00 (via APScheduler).
-    """
-    current_week = get_week_number(datetime.utcnow())
-
-    try:
-        locked_count = Prediction.query.filter_by(
-            week=current_week, status="pending"
-        ).update(
-            {"status": "locked", "updated_at": datetime.utcnow()},
-            synchronize_session=False
-        )
-        db.session.commit()
-        return jsonify({
-            "message": f"{locked_count} predictions locked for week {current_week}"
-        }), 200
-
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
-    
-
-def fetch_match_result(event_id):
-    """Fetch actual match result from API and return 'home', 'away', or 'draw'."""
-    url = f"https://{RAPIDAPI_HOST}/football-get-match-score?eventid={event_id}"
-    headers = {
-        "x-rapidapi-host": RAPIDAPI_HOST,
-        "x-rapidapi-key": RAPIDAPI_KEY,
-    }
-    resp = requests.get(url, headers=headers)
-    data = resp.json()
-
-    if data.get("status") != "success":
-        return None
-
-    scores = data["response"]["scores"]
-    home_score = scores[0]["score"]
-    away_score = scores[1]["score"]
-
-    if home_score > away_score:
-        return "home"
-    elif away_score > home_score:
-        return "away"
-    else:
-        return "draw"
-
-
-def fetch_odds(event_id, prediction):
-    """Fetch odds for given match and prediction ('home', 'away', 'draw')."""
-    url = f"https://{RAPIDAPI_HOST}/football-event-odds?eventid={event_id}&countrycode=UK"
-    headers = {
-        "x-rapidapi-host": RAPIDAPI_HOST,
-        "x-rapidapi-key": RAPIDAPI_KEY,
-    }
-    resp = requests.get(url, headers=headers)
-    data = resp.json()
-
-    if data.get("status") != "success":
-        return 0.0
-
-    selections = data["response"]["odds"]["odds"]["resolvedOddsMarket"]["selections"]
-
-    for sel in selections:
-        if prediction == "home" and sel["name"] == "1":
-            return float(sel["oddsDecimal"])
-        elif prediction == "draw" and sel["name"] == "X":
-            return float(sel["oddsDecimal"])
-        elif prediction == "away" and sel["name"] == "2":
-            return float(sel["oddsDecimal"])
-
-    return 0.0
-
-
-@prediction_bp.route("/calc-points", methods=["POST"])
-def calculate_weekly_points():
-    """
-    Scheduled job: calculate points for all users' predictions
-    after matches have finished.
-    Stores per-match points and bonus.
-    """
-    try:
-        predictions = Prediction.query.filter_by(status="locked").all()
-
-        for pred in predictions:
-            total_points = 0
-            correct_count = 0
-            all_scored = True
-
-            # safeguard: skip if already scored
-            if pred.status == "scored":
-                continue
-
-            # Loop through matches one, two, three
-            for match_num in ["one", "two", "three"]:
-                match_id = getattr(pred, f"match_{match_num}_id")
-                user_pick = getattr(pred, f"match_{match_num}_prediction")
-
-                if not match_id or not user_pick:
-                    all_scored = False
-                    break
-
-                # Fetch actual result
-                actual_result = fetch_match_result(match_id)
-                if not actual_result:
-                    all_scored = False
-                    break
-
-                # If correct prediction → calculate points from odds
-                match_points = 0
-                if user_pick == actual_result:
-                    odds = fetch_odds(match_id, user_pick)
-                    if odds:
-                        match_points = floor(float(odds) * 10)
-                        correct_count += 1
-
-                # Store match points in respective column
-                setattr(pred, f"match_{match_num}_point", match_points)
-                total_points += match_points
-
-            # Finalize if all 3 matches have results
-            if all_scored:
-                # Bonus for perfect 3/3
-                if correct_count == 3:
-                    total_points += 100
-                    pred.bonus_awarded = True
-                else:
-                    pred.bonus_awarded = False
-
-                pred.status = "scored"
-                pred.points = total_points
-                pred.updated_at = datetime.utcnow()
-
-                # Update user's cumulative total
-                user = User.query.get(pred.user_id)
-                if user:
-                    user.point = (user.point or 0) + total_points
-
-        db.session.commit()
-        return jsonify({"message": "Weekly points calculated successfully"}), 200
-
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
-    
+    return jsonify(resp), 200
 
 
 @prediction_bp.route("/leaderboard/weekly", methods=["GET"])
@@ -448,7 +245,7 @@ def weekly_leaderboard():
                 Prediction.user_id,
                 User.name,
                 User.profile,
-                func.sum(Prediction.points).label("obtained_points")
+                func.sum(Prediction.obtained_points).label("obtained_points")
             )
             .join(User, User.user_id == Prediction.user_id)
             .filter(Prediction.week == week)
