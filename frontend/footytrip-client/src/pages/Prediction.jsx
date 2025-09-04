@@ -1,0 +1,100 @@
+import { useState, useEffect, useContext } from "react";
+import { AuthContext } from "../contexts/AuthContext";
+import Header from "../components/Header";
+import NaviBar from "../components/NaviBar"
+import PredictionCard from "../components/PredictionCard";
+
+const Prediction = () => {
+  const { token } = useContext(AuthContext);
+  const [userId, setUserId] = useState(null);
+  const [currentPrediction, setCurrentPrediction] = useState(null);
+  const [lastPrediction, setLastPrediction] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Step 1: Fetch user_id from /api/check
+  useEffect(() => {
+    const fetchUserId = async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:5000/api/check", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setUserId(data.user_id);
+        } else {
+          console.error("Failed to fetch user_id");
+        }
+      } catch (err) {
+        console.error("Error fetching user_id:", err);
+      }
+    };
+
+    if (token) fetchUserId();
+  }, [token]);
+
+  // Step 2: Fetch predictions once user_id is available
+  useEffect(() => {
+    const fetchPredictions = async () => {
+      if (!userId) return;
+
+      try {
+        const [currentRes, lastRes] = await Promise.all([
+          fetch(`http://127.0.0.1:5000/api/predictions/current?user_id=${userId}`),
+          fetch(`http://127.0.0.1:5000/api/predictions/last?user_id=${userId}`),
+        ]);
+
+        if (currentRes.ok) {
+          setCurrentPrediction(await currentRes.json());
+        }
+        if (lastRes.ok) {
+          setLastPrediction(await lastRes.json());
+        }
+      } catch (err) {
+        console.error("Error fetching predictions:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPredictions();
+  }, [userId]);
+
+  if (loading) return <p>Loading...</p>;
+
+  return (
+    <>
+      <Header />
+      <NaviBar />
+        <div className="p-6 space-y-6">
+        <h1 className="text-2xl font-bold">Your Predictions</h1>
+
+        {/* Current Prediction */}
+        {currentPrediction ? (
+            <PredictionCard prediction={currentPrediction} />
+        ) : (
+            <p>You have not predicted yet for this week.</p>
+        )}
+
+        {/* Last Week Prediction */}
+        {lastPrediction ? (
+            <div>
+            <h2 className="text-xl font-semibold mt-6">Last Week</h2>
+            <PredictionCard prediction={lastPrediction} />
+            </div>
+        ) : (
+            <p>No prediction found for last week.</p>
+        )}
+
+        {/* Link to history page */}
+        <a href="/predictions/history" className="text-blue-600 underline block mt-4">
+            Click here to see more prediction histories
+        </a>
+        </div>
+    </>
+  );
+};
+
+export default Prediction;

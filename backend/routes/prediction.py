@@ -173,15 +173,16 @@ def update_prediction():
 
 
 @prediction_bp.route("/fetch", methods=["GET"])
-def fetch_prediction():
-    user_id = request.args.get("user_id", type=int)
-    week = request.args.get("week", type=int)
+def fetch_prediction(user_id=None, week=None):
+    if user_id is None:
+        user_id = request.args.get("user_id", type=int)
+        if not user_id:
+            return jsonify({"error": "user_id is required"}), 400
 
-    if not user_id:
-        return jsonify({"error": "user_id is required"}), 400
-
-    if not week:
-        week = get_week_number(datetime.utcnow())
+    if week is None:
+        week = request.args.get("week", type=int)
+        if not week:
+            week = get_week_number(datetime.utcnow())
 
     prediction = Prediction.query.filter_by(user_id=user_id, week=week).first()
     if not prediction:
@@ -223,7 +224,6 @@ def fetch_prediction():
 
     if prediction.status == "scored":
         resp["obtained_points"] = prediction.obtained_points
-        # resp["bonus_awarded"] = prediction.bonus_awarded
 
     return jsonify(resp), 200
 
@@ -341,3 +341,23 @@ def get_available_matches():
 
     except requests.exceptions.RequestException as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+    
+
+@prediction_bp.route("/current", methods=["GET"])
+def current_prediction():
+    user_id = request.args.get("user_id", type=int)
+    if not user_id:
+        return jsonify({"error": "user_id is required"}), 400
+
+    week = get_week_number(datetime.utcnow())
+    return fetch_prediction(user_id=user_id, week=week)
+
+
+@prediction_bp.route("/last", methods=["GET"])
+def last_prediction():
+    user_id = request.args.get("user_id", type=int)
+    if not user_id:
+        return jsonify({"error": "user_id is required"}), 400
+
+    week = get_week_number(datetime.utcnow()) - 1
+    return fetch_prediction(user_id=user_id, week=week)

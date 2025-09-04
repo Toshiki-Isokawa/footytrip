@@ -1,5 +1,5 @@
 import os
-from flask import Blueprint, jsonify
+from flask import Blueprint, request, jsonify
 from datetime import datetime
 from models import db, Prediction, PredictionMatch, User
 import requests
@@ -44,15 +44,15 @@ def lock_predictions():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+    
 
-
-def fetch_match_result(event_id):
+def fetch_match_result_helper(event_id):
     """
     Fetch the final result of a match including scores, total goals,
     winner, and red card counts.
+    Returns a dict or None if failed.
     """
     try:
-        # 1. Fetch final score
         score_res = requests.get(
             f"https://{RAPIDAPI_HOST}/football-get-match-score",
             headers=HEADERS,
@@ -67,21 +67,12 @@ def fetch_match_result(event_id):
 
         home_score = scores[0].get("score")
         away_score = scores[1].get("score")
-
         if home_score is None or away_score is None:
             return None
 
-        # Determine winner
-        if home_score > away_score:
-            winner = "home"
-        elif away_score > home_score:
-            winner = "away"
-        else:
-            winner = "draw"
-
+        winner = "home" if home_score > away_score else "away" if away_score > home_score else "draw"
         total_goals = home_score + away_score
 
-        # 2. Fetch red card info
         stats_res = requests.get(
             f"https://{RAPIDAPI_HOST}/football-get-match-all-stats",
             headers=HEADERS,
@@ -90,9 +81,7 @@ def fetch_match_result(event_id):
         stats_res.raise_for_status()
         stats_data = stats_res.json()
 
-        red_card_home = 0
-        red_card_away = 0
-
+        red_card_home = red_card_away = 0
         stats_list = stats_data.get("response", {}).get("stats", [])
         for stat_group in stats_list:
             if stat_group.get("key") == "discipline":
@@ -113,6 +102,20 @@ def fetch_match_result(event_id):
 
     except requests.exceptions.RequestException:
         return None
+
+
+@predictionMatch_bp.route("/results", methods=["GET"])
+def fetch_match_result():
+    event_id = request.args.get("event_id", type=int)
+    if not event_id:
+        return jsonify({"error": "event_id is required"}), 400
+
+    result = fetch_match_result_helper(event_id)
+    if not result:
+        return jsonify({"error": "Failed to fetch match result"}), 500
+
+    return jsonify(result), 200
+
     
 
 @predictionMatch_bp.route("/calc-points", methods=["POST"])
@@ -130,7 +133,7 @@ def calculate_weekly_points():
             matches = PredictionMatch.query.filter_by(prediction_id=pred.prediction_id).all()
 
             for match in matches:
-                result = fetch_match_result(match.match_id)
+                result = fetch_match_result_helper(match.match_id)
                 if not result:
                     all_correct = False
                     continue
