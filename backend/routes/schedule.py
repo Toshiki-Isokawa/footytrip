@@ -16,8 +16,7 @@ HEADERS = {
     "x-rapidapi-key": RAPIDAPI_KEY,
 }
 
-def fetch_logo(team_id):
-    """Return cached logo or fetch from external API and store it."""
+def fetch_logo_helper(team_id):
     team = TeamLogo.query.get(team_id)
     if team:
         return team.logo_url
@@ -42,10 +41,25 @@ def fetch_logo(team_id):
                 db.session.rollback()
                 existing = TeamLogo.query.get(team_id)
                 return existing.logo_url if existing else logo_url
+            print("Fetched and cached logo for team_id:", team_id)
+            print("Logo URL:", logo_url)
             return logo_url
     except requests.exceptions.RequestException:
         return None
     return None
+
+@schedule_bp.route("/logo", methods=["GET"])
+def fetch_logo():
+    team_id = request.args.get("team_id", type=int)
+    if not team_id:
+        return jsonify({"error": "team_id is required"}), 400
+
+    result = fetch_logo_helper(team_id)
+    print("Result from fetch_logo_helper:", result)
+    if not result:
+        return jsonify({"error": "Failed to fetch match result"}), 500
+
+    return jsonify({"logo_url": result}), 200
 
 
 LEAGUE_CACHE_TTL = 60 * 60  # 1 hour
@@ -130,13 +144,13 @@ def get_schedule():
                     "id": home_team.get("id"),
                     "name": home_team.get("name"),
                     "score": home_team.get("score"),
-                    "logo": fetch_logo(home_team.get("id"))
+                    "logo": fetch_logo_helper(home_team.get("id"))
                 },
                 "away": {
                     "id": away_team.get("id"),
                     "name": away_team.get("name"),
                     "score": away_team.get("score"),
-                    "logo": fetch_logo(away_team.get("id"))
+                    "logo": fetch_logo_helper(away_team.get("id"))
                 },
             }
 

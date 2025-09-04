@@ -15,6 +15,7 @@ import Footy from "./pages/Footy";
 import Schedule from "./pages/Schedule";
 import { AuthProvider } from "./contexts/AuthContext"; // Import AuthProvider
 import MatchDetail from "./pages/MatchDetail";
+import Prediction from "./pages/Prediction";
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
           <Route path="/find" element={<FindFooty />} />
           <Route path="/footy/:userId" element={<Footy />}/>
           <Route path="/schedule" element={<Schedule />} />
+          <Route path="/prediction" element={<Prediction />} />
         </Routes>
       </Router>
     </AuthProvider>
