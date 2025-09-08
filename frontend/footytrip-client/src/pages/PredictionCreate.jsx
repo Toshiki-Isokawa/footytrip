@@ -14,11 +14,11 @@ const PredictionCreate = () => {
 
   // UI state
   const [leagueSearch, setLeagueSearch] = useState("");
-  const [filteredLeagues, setFilteredLeagues] = useState([]);
   const [selectedLeague, setSelectedLeague] = useState(null);
   const [selectedMatch, setSelectedMatch] = useState(null);
-  const [matches, setMatches] = useState([]); // Prediction cards
+  const [matches, setMatches] = useState([]);
   const [predictions, setPredictions] = useState({});
+  const [isEditing, setIsEditing] = useState(false);
 
   // Fetch leagues + available matches
   useEffect(() => {
@@ -40,39 +40,63 @@ const PredictionCreate = () => {
     fetchData();
   }, []);
 
-  // Fetch user_id
+  // Fetch user_id and existing prediction
   useEffect(() => {
-    const fetchUserId = async () => {
+    const fetchUserAndPrediction = async () => {
+      if (!token) return;
       try {
         const res = await fetch("http://127.0.0.1:5000/api/check", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (res.ok) {
-          const data = await res.json();
-          setUserId(data.user_id);
+        if (!res.ok) throw new Error("Failed to fetch user_id");
+        const data = await res.json();
+        setUserId(data.user_id);
+
+        // Fetch existing prediction
+        const predRes = await fetch(
+          `http://127.0.0.1:5000/api/predictions/fetch?user_id=${data.user_id}`
+        );
+        if (predRes.ok) {
+          const predData = await predRes.json();
+          if (predData.matches && predData.matches.length > 0) {
+            setIsEditing(true);
+            setMatches(
+              predData.matches.map((m) => ({
+                match_id: m.match_id,
+                home_team: m.home_team,
+                away_team: m.away_team,
+              }))
+            );
+
+            const loadedPredictions = {};
+            predData.matches.forEach((m) => {
+              loadedPredictions[m.match_id] = {
+                result_prediction: m.result_prediction,
+                score_home_prediction: m.score_home_prediction,
+                score_away_prediction: m.score_away_prediction,
+                total_goals_prediction: m.total_goals_prediction,
+                red_card_prediction: m.red_card_prediction,
+              };
+            });
+            setPredictions(loadedPredictions);
+          }
         }
       } catch (err) {
-        console.error("Error fetching user_id:", err);
+        console.error("Error fetching user or prediction:", err);
       }
     };
-    if (token) fetchUserId();
+
+    fetchUserAndPrediction();
   }, [token]);
 
   // Filter leagues based on search and available matches
-  useEffect(() => {
-    const availableLeagueIds = new Set(
-      availableMatches.map((m) => m.league_id)
-    );
-    const filtered = allLeagues.filter(
-      (l) =>
-        availableLeagueIds.has(l.id) &&
-        (l.name.toLowerCase().includes(leagueSearch.toLowerCase()) ||
-          l.country.toLowerCase().includes(leagueSearch.toLowerCase()))
-    );
-    setFilteredLeagues(filtered);
-  }, [leagueSearch, allLeagues, availableMatches]);
+  const filteredLeagues = allLeagues.filter(
+    (l) =>
+      availableMatches.some((m) => m.league_id === l.id) &&
+      (l.name.toLowerCase().includes(leagueSearch.toLowerCase()) ||
+        l.country.toLowerCase().includes(leagueSearch.toLowerCase()))
+  );
 
-  // Matches for selected league excluding already selected matches
   const availableMatchesForLeague = availableMatches.filter(
     (m) =>
       m.league_id === selectedLeague &&
@@ -97,6 +121,7 @@ const PredictionCreate = () => {
   };
 
   const handleRemoveMatch = (matchId) => {
+    if (isEditing) return;
     setMatches(matches.filter((m) => m.match_id !== matchId));
     setPredictions((prev) => {
       const updated = { ...prev };
@@ -109,53 +134,55 @@ const PredictionCreate = () => {
     setPredictions((prev) => ({ ...prev, [matchId]: data }));
   };
 
-  // Submit predictions
   const handleSubmit = async () => {
     try {
-      const matchesPayload = matches
+        const matchesPayload = matches
         .map((match) => {
-          const pred = predictions[match.match_id];
-          if (!pred) return null;
-          return {
-            match_id: match.match_id,
-            home_team: match.home_team.name,
-            home_team_id: match.home_team.id,
-            away_team: match.away_team.name,
-            away_team_id: match.away_team.id,
-            result_prediction: pred.result_prediction,
-            score_home_prediction: pred.score_home_prediction,
-            score_away_prediction: pred.score_away_prediction,
-            total_goals_prediction: pred.total_goals_prediction,
-            red_card_prediction: pred.red_card_prediction,
-          };
+            const pred = predictions[match.match_id];
+            if (!pred) return null;
+            return {
+                match_id: match.match_id,
+                home_team: match.home_team.name,
+                home_team_id: match.home_team.id,
+                away_team: match.away_team.name,
+                away_team_id: match.away_team.id,
+                result_prediction: pred.result_prediction,
+                score_home_prediction: pred.score_home_prediction,
+                score_away_prediction: pred.score_away_prediction,
+                total_goals_prediction: pred.total_goals_prediction,
+                red_card_prediction: pred.red_card_prediction,
+            };
         })
         .filter(Boolean);
 
-      const res = await fetch(
-        "http://127.0.0.1:5000/api/predictions/create",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id: userId, matches: matchesPayload }),
-        }
-      );
+        const url = isEditing
+        ? "http://127.0.0.1:5000/api/predictions/update"
+        : "http://127.0.0.1:5000/api/predictions/create";
 
-      if (!res.ok) throw new Error("Failed to submit predictions");
+        const res = await fetch(url, {
+            method: isEditing? "PUT" : "POST", // usually updates use POST with same payload
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: userId, matches: matchesPayload }),
+        });
 
-      alert("Predictions submitted successfully!");
-      navigate("/prediction");
+        if (!res.ok) throw new Error("Failed to submit predictions");
+
+        alert("Predictions submitted successfully!");
+        navigate("/prediction");
     } catch (err) {
-      console.error(err);
-      alert("Error submitting predictions");
+        console.error(err);
+        alert("Error submitting predictions");
     }
-  };
+    };
+
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Create Prediction</h1>
+      <h1 className="text-2xl font-bold mb-6">
+        {isEditing ? "Edit Prediction" : "Create Prediction"}
+      </h1>
 
-      {/* League + Match selection */}
-      {matches.length < 3 && (
+      {!isEditing && matches.length < 3 && (
         <div className="mb-6 space-y-4">
           <input
             type="text"
@@ -164,7 +191,6 @@ const PredictionCreate = () => {
             placeholder="Type to search league"
             className="border rounded-lg px-3 py-2 w-full"
           />
-
           {filteredLeagues.length > 0 && (
             <select
               value={selectedLeague || ""}
@@ -179,7 +205,6 @@ const PredictionCreate = () => {
               ))}
             </select>
           )}
-
           {selectedLeague && availableMatchesForLeague.length > 0 && (
             <select
               value={selectedMatch || ""}
@@ -198,25 +223,24 @@ const PredictionCreate = () => {
         </div>
       )}
 
-      {/* Prediction cards */}
-      {matches.map((match, idx) => (
+      {matches.map((match) => (
         <PredictionMatchForm
           key={match.match_id}
           match={match}
+          initialData={predictions[match.match_id] || {}}
           onChange={handleMatchChange}
           onRemove={handleRemoveMatch}
-          removable={true}
+          removable={!isEditing}
         />
       ))}
 
-      {/* Submit button */}
       {matches.length > 0 && (
         <div className="flex justify-end mt-6">
           <button
             onClick={handleSubmit}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700"
           >
-            Submit Predictions
+            {isEditing ? "Update Predictions" : "Submit Predictions"}
           </button>
         </div>
       )}
