@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import MatchPreview from "./MatchPreview";
 
-const PredictionMatchForm = ({ match, onChange, onRemove, removable }) => {
+const PredictionMatchForm = ({ match, onChange, onRemove, initialData }) => {
   const [logos, setLogos] = useState({ home: null, away: null });
   const [stadium, setStadium] = useState(null);
   const [formData, setFormData] = useState({
@@ -12,6 +12,18 @@ const PredictionMatchForm = ({ match, onChange, onRemove, removable }) => {
     total_goals_prediction: "",
     red_card_prediction: false,
   });
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        score_home_prediction: initialData.score_home_prediction || "",
+        score_away_prediction: initialData.score_away_prediction || "",
+        result_prediction: initialData.result_prediction || "",
+        total_goals_prediction: initialData.total_goals_prediction || "",
+        red_card_prediction: initialData.red_card_prediction || false,
+      });
+    }
+  }, [initialData]);
 
   // Fetch team logos + stadium
   useEffect(() => {
