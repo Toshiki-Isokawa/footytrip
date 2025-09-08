@@ -2,10 +2,12 @@ import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../contexts/AuthContext";
 import Header from "../components/Header";
 import NaviBar from "../components/NaviBar"
+import { useNavigate } from "react-router-dom";
 import PredictionCard from "../components/PredictionCard";
 
 const Prediction = () => {
   const { token } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [userId, setUserId] = useState(null);
   const [currentPrediction, setCurrentPrediction] = useState(null);
   const [lastPrediction, setLastPrediction] = useState(null);
@@ -92,6 +94,15 @@ const Prediction = () => {
         <a href="/predictions/history" className="text-blue-600 underline block mt-4">
             Click here to see more prediction histories
         </a>
+        {/* Create Prediction button */}
+      <div className="mt-8 text-center">
+        <button
+          onClick={() => navigate("/prediction/create")}
+          className="px-6 py-3 bg-blue-600 text-white rounded-xl shadow hover:bg-blue-700 transition"
+        >
+          Create New Prediction
+        </button>
+      </div>
         </div>
     </>
   );
