@@ -185,7 +185,6 @@ def fetch_prediction(user_id=None, week=None):
             week = get_week_number(datetime.utcnow())
 
     prediction = Prediction.query.filter_by(user_id=user_id, week=week).first()
-    print(f"Fetched prediction for user_id={user_id}, week={week}: {prediction}")
     if not prediction:
         return jsonify({"error": "No prediction found for this user/week"}), 404
 
@@ -206,13 +205,11 @@ def fetch_prediction(user_id=None, week=None):
 
         if prediction.status == "scored":
             item["obtained_points"] = m.obtained_points
-            try:
-                actual_result = fetch_match_result(m.match_id)
-                item["score_home_actual"] = actual_result["home_score"]
-                item["score_away_actual"] = actual_result["away_score"]
-            except Exception as e:
-                item["score_home_actual"] = None
-                item["score_away_actual"] = None
+            item["result_actual"] = m.result_actual
+            item["score_home_actual"] = m.score_home_actual
+            item["score_away_actual"] = m.score_away_actual
+            item["total_goals_actual"] = m.total_goals_actual
+            item["red_card_actual"] = m.red_card_actual
 
         matches_out.append(item)
 
