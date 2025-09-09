@@ -12,38 +12,6 @@ HEADERS = {
     "x-rapidapi-host": RAPIDAPI_HOST,
     "x-rapidapi-key": RAPIDAPI_KEY,
 }
-
-@predictionMatch_bp.route("/lock", methods=["POST"])
-def lock_predictions():
-    """
-    Lock all pending predictions for the current week.
-    This runs automatically on Friday 00:00, but can also be triggered manually.
-    """
-    try:
-        # Get current week number (ISO week)
-        current_week = datetime.utcnow().isocalendar()[1]
-
-        # Find all predictions with status "pending" for this week
-        pending_predictions = Prediction.query.filter_by(
-            week=current_week,
-            status="pending"
-        ).all()
-
-        if not pending_predictions:
-            return jsonify({"message": "No pending predictions to lock"}), 200
-
-        # Update their status to "locked"
-        for pred in pending_predictions:
-            pred.status = "locked"
-            pred.updated_at = datetime.utcnow()
-
-        db.session.commit()
-
-        return jsonify({"message": f"{len(pending_predictions)} predictions locked successfully"}), 200
-
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
     
 
 def fetch_match_result_helper(event_id, prediction_match_id=None):
@@ -140,7 +108,7 @@ def calculate_weekly_points():
     Calculate weekly points for all locked predictions.
     """
     try:
-        predictions = Prediction.query.filter_by(status="locked").all()
+        predictions = Prediction.query.filter_by(Prediction.status.in_(["pending", "locked"])).all()
 
         for pred in predictions:
             total_points = 0

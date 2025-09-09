@@ -5,7 +5,6 @@ import os
 from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, verify_jwt_in_request
 from extensions import db, bcrypt, jwt
-from utils import schedule_jobs
 from routes.trip import trip_bp
 from routes.auth import auth_bp
 from routes.user import user_bp
@@ -30,7 +29,6 @@ def create_app():
     bcrypt.init_app(app)
     jwt.init_app(app)
     migrate = Migrate(app, db)
-    schedule_jobs(app)
 
     # Routes
     app.register_blueprint(auth_bp)
