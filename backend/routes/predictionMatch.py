@@ -46,7 +46,7 @@ def lock_predictions():
         return jsonify({"error": str(e)}), 500
     
 
-def fetch_match_result_helper(event_id):
+def fetch_match_result_helper(event_id, prediction_match_id=None):
     """
     Fetch the final result of a match including scores, total goals,
     winner, and red card counts.
@@ -91,7 +91,7 @@ def fetch_match_result_helper(event_id):
                         red_card_away = item.get("stats", [0, 0])[1] or 0
                         break
 
-        return {
+        result = {
             "home_score": home_score,
             "away_score": away_score,
             "total_goals": total_goals,
@@ -99,6 +99,18 @@ def fetch_match_result_helper(event_id):
             "red_card_away": red_card_away,
             "winner": winner
         }
+
+        if prediction_match_id:
+            match = PredictionMatch.query.get(prediction_match_id)
+            if match:
+                match.result_actual = winner
+                match.score_home_actual = home_score
+                match.score_away_actual = away_score
+                match.total_goals_actual = total_goals
+                match.red_card_actual = red_card_home + red_card_away
+                db.session.commit()
+
+        return result
 
     except requests.exceptions.RequestException:
         return None
@@ -109,8 +121,12 @@ def fetch_match_result():
     event_id = request.args.get("event_id", type=int)
     if not event_id:
         return jsonify({"error": "event_id is required"}), 400
+    
+    prediction_match_id = request.args.get("prediction_match_id", type=int)
+    if not prediction_match_id:
+        return jsonify({"error": "prediction_match_id is required"}), 400
 
-    result = fetch_match_result_helper(event_id)
+    result = fetch_match_result_helper(event_id, prediction_match_id)
     if not result:
         return jsonify({"error": "Failed to fetch match result"}), 500
 
@@ -133,7 +149,7 @@ def calculate_weekly_points():
             matches = PredictionMatch.query.filter_by(prediction_id=pred.prediction_id).all()
 
             for match in matches:
-                result = fetch_match_result_helper(match.match_id)
+                result = fetch_match_result_helper(match.match_id, prediction_match_id=match.id)
                 if not result:
                     all_correct = False
                     continue

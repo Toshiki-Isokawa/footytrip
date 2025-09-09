@@ -161,6 +161,7 @@ class PredictionMatch(db.Model):
     total_goals_prediction = db.Column(db.Integer, nullable=True)
     red_card_prediction = db.Column(db.Boolean, nullable=True)
 
+    # Actual Results
     result_actual = db.Column(db.String(10), nullable=True)
     score_home_actual = db.Column(db.Integer, nullable=True)
     score_away_actual = db.Column(db.Integer, nullable=True)
