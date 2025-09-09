@@ -91,18 +91,25 @@ const Prediction = () => {
         )}
 
         {/* Link to history page */}
-        <a href="/predictions/history" className="text-blue-600 underline block mt-4">
+        <a href="/prediction/history" className="text-blue-600 underline block mt-4">
             Click here to see more prediction histories
         </a>
         {/* Create Prediction button */}
-      <div className="mt-8 text-center">
-        <button
-          onClick={() => navigate("/prediction/create")}
-          className="px-6 py-3 bg-blue-600 text-white rounded-xl shadow hover:bg-blue-700 transition"
-        >
-            {currentPrediction ? "Edit Prediction" : "Create New Prediction"}
-        </button>
-      </div>
+        <div className="mt-8 text-center">
+            {currentPrediction ? 
+                <button
+                onClick={() => navigate("/prediction/edit")}
+                className="px-6 py-3 bg-blue-600 text-white rounded-xl shadow hover:bg-blue-700 transition"
+                > "Edit Prediction" </button>
+                :
+                <button
+                onClick={() => navigate("/prediction/create")}
+                className="px-6 py-3 bg-blue-600 text-white rounded-xl shadow hover:bg-blue-700 transition"
+                >
+                "Create New Prediction"
+                </button>
+            }
+            </div>
         </div>
     </>
   );

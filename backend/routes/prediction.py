@@ -185,6 +185,7 @@ def fetch_prediction(user_id=None, week=None):
             week = get_week_number(datetime.utcnow())
 
     prediction = Prediction.query.filter_by(user_id=user_id, week=week).first()
+    print(f"Fetched prediction for user_id={user_id}, week={week}: {prediction}")
     if not prediction:
         return jsonify({"error": "No prediction found for this user/week"}), 404
 
