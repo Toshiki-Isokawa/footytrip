@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 
 const PredictionCard = ({ prediction }) => {
   const [logos, setLogos] = useState({}); // { teamId: logoUrl }
-  const [results, setResults] = useState({}); // { matchId: actualResult }
 
   useEffect(() => {
     const fetchLogos = async () => {
@@ -29,30 +28,6 @@ const PredictionCard = ({ prediction }) => {
     fetchLogos();
   }, [prediction]);
 
-  useEffect(() => {
-    const fetchResults = async () => {
-      if (prediction.status !== "scored") return;
-
-      const newResults = {};
-      for (const match of prediction.matches) {
-        try {
-          const res = await fetch(
-            `http://127.0.0.1:5000/api/predictions/results?event_id=${match.match_id}`
-          );
-          const data = await res.json();
-          if (data) {
-            newResults[match.match_id] = data;
-          }
-        } catch (err) {
-          newResults[match.match_id] = null;
-        }
-      }
-      setResults(newResults);
-    };
-
-    fetchResults();
-  }, [prediction]);
-
   return (
     <div className="bg-white shadow-md rounded-2xl p-4 w-full max-w-3xl mx-auto mb-6">
       <h2 className="text-xl font-bold text-center mb-4">
@@ -61,7 +36,6 @@ const PredictionCard = ({ prediction }) => {
 
       <div className="space-y-4">
         {prediction.matches.map((match) => {
-          const actual = results[match.match_id];
           return (
             <div
               key={match.match_id}
@@ -84,11 +58,11 @@ const PredictionCard = ({ prediction }) => {
                   {match.score_home_prediction} - {match.score_away_prediction}
                 </span>
 
-                {prediction.status === "scored" && actual && (
+                {prediction.status === "scored" && (
                   <>
                     <span className="text-sm text-gray-500 mt-1">Actual</span>
                     <span className="font-bold text-green-600">
-                      {actual.home_score} - {actual.away_score}
+                      {match.score_home_actual} - {match.score_away_actual}
                     </span>
                   </>
                 )}
