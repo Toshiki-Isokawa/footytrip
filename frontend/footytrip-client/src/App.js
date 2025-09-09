@@ -17,6 +17,7 @@ import { AuthProvider } from "./contexts/AuthContext"; // Import AuthProvider
 import MatchDetail from "./pages/MatchDetail";
 import Prediction from "./pages/Prediction";
 import PredictionCreate from "./pages/PredictionCreate";
+import PredictionHistory from "./pages/PredictionHistory";
 
 function App() {
   return (
@@ -41,6 +42,8 @@ function App() {
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/prediction" element={<Prediction />} />
           <Route path="/prediction/create" element={<PredictionCreate />} />
+          <Route path="/prediction/edit" element={<PredictionCreate />} />
+          <Route path="/prediction/history" element={<PredictionHistory />} />
         </Routes>
       </Router>
     </AuthProvider>
