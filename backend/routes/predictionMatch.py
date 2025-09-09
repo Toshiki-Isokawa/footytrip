@@ -2,6 +2,7 @@ import os
 from flask import Blueprint, request, jsonify
 from datetime import datetime
 from models import db, Prediction, PredictionMatch, User
+from sqlalchemy import or_
 import requests
 
 predictionMatch_bp = Blueprint("prediction_match", __name__, url_prefix="/api/predictions")
@@ -107,8 +108,13 @@ def calculate_weekly_points():
     """
     Calculate weekly points for all locked predictions.
     """
+    current_week = datetime.utcnow().isocalendar()[1]
+
     try:
-        predictions = Prediction.query.filter_by(Prediction.status.in_(["pending", "locked"])).all()
+        predictions = Prediction.query.filter(
+            Prediction.status.in_(["pending", "locked"]),
+            Prediction.week < current_week
+        ).all()
 
         for pred in predictions:
             total_points = 0

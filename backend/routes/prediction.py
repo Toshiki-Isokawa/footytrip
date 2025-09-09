@@ -17,10 +17,16 @@ HEADERS = {
     "x-rapidapi-key": RAPIDAPI_KEY,
 }
 
-
 def get_week_number(date: datetime):
     """Return ISO week number for a given date."""
     return date.isocalendar()[1]
+
+@prediction_bp.route("/week", methods=["GET"])
+def get_week_number_route():
+    """Return current ISO week number."""
+    now = datetime.utcnow()
+    current_week = get_week_number(now)
+    return jsonify({"week": current_week}), 200
 
 
 @prediction_bp.route("/create", methods=["POST"])

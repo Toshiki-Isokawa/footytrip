@@ -4,7 +4,7 @@ import uuid
 from werkzeug.utils import secure_filename
 from flask_jwt_extended import get_jwt_identity
 from apscheduler.schedulers.background import BackgroundScheduler
-from routes.predictionMatch import lock_predictions, calculate_weekly_points
+from routes.predictionMatch import calculate_weekly_points
 from flask import current_app
 from models import UserLogin, User
 
