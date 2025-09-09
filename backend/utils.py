@@ -36,33 +36,3 @@ def get_current_user():
         return None
     return User.query.filter_by(user_id=user_login.user_id).first()
 
-
-def schedule_jobs(app):
-    scheduler = BackgroundScheduler()
-
-    # Lock predictions every Friday 00:00
-    def lock_job():
-        with app.app_context():
-            try:
-                response = app.test_client().post("/api/prediction/lock")
-                if response.status_code != 200:
-                    app.logger.error(f"Lock predictions failed: {response.get_json()}")
-            except Exception as e:
-                app.logger.exception("Unexpected error in scheduled lock_predictions")
-
-    scheduler.add_job(lock_job, trigger="cron", day_of_week="fri", hour=0, minute=0)
-
-    # Calculate weekly points every Monday 00:00
-    def calc_points_job():
-        with app.app_context():
-            try:
-                response = app.test_client().post("/api/prediction/calc-points")
-                if response.status_code != 200:
-                    app.logger.error(f"Weekly points calculation failed: {response.get_json()}")
-            except Exception as e:
-                app.logger.exception("Unexpected error in scheduled calculate_weekly_points")
-
-    scheduler.add_job(calc_points_job, trigger="cron", day_of_week="mon", hour=0, minute=0)
-
-    scheduler.start()
-
