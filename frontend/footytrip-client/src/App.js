@@ -18,6 +18,7 @@ import MatchDetail from "./pages/MatchDetail";
 import Prediction from "./pages/Prediction";
 import PredictionCreate from "./pages/PredictionCreate";
 import PredictionHistory from "./pages/PredictionHistory";
+import Leaderboard from "./pages/Leaderboard";
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
           <Route path="/prediction/create" element={<PredictionCreate />} />
           <Route path="/prediction/edit" element={<PredictionCreate />} />
           <Route path="/prediction/history" element={<PredictionHistory />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
         </Routes>
       </Router>
     </AuthProvider>
