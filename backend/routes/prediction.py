@@ -260,7 +260,7 @@ def weekly_leaderboard():
         )
 
         leaderboard = [
-            {"user_id": r.user_id, "name": r.name, "profile": r.profile, "obtained_points": int(r.obtained_points)}
+            {"user_id": r.user_id, "name": r.name, "profile": r.profile, "obtained_points": int(r.obtained_points), "fav_team": User.query.get(r.user_id).fav_team, "fav_player": User.query.get(r.user_id).fav_player}
             for r in results
         ]
 
@@ -285,7 +285,7 @@ def overall_leaderboard():
         )
 
         leaderboard = [
-            {"user_id": u.user_id, "name": u.name, "profile": u.profile, "total_points": int(u.point)}
+            {"user_id": u.user_id, "name": u.name, "profile": u.profile, "total_points": int(u.point), "fav_team": u.fav_team, "fav_player": u.fav_player}
             for u in users
         ]
 

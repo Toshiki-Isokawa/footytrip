@@ -14,6 +14,7 @@ const Home = () => {
     const [trips, setTrips] = useState([]);
     const { token } = useContext(AuthContext);
     const navigate = useNavigate();
+    const [topUser, setTopUser] = useState(null);
 
     useEffect(() => {
         setIsLoggedIn(!!token);
@@ -35,6 +36,22 @@ const Home = () => {
             .then(feedTrips => setTrips(feedTrips))
             .catch(err => console.error("Failed to fetch feed trips:", err));
         }
+    }, []);
+
+    useEffect(() => {
+        const fetchTopUser = async () => {
+            try {
+            const res = await fetch("http://127.0.0.1:5000/api/predictions/leaderboard/overall");
+            const data = await res.json();
+            if (res.ok && data.length > 0) {
+                setTopUser(data[0]); // top 1 user
+            }
+            } catch (err) {
+            console.error("Failed to fetch top user", err);
+            }
+        };
+
+        fetchTopUser();
     }, []);
 
     if (!isLoggedIn) {
@@ -63,12 +80,20 @@ const Home = () => {
             />
 
             <h2 className="text-xl font-bold ml-4 mt-8 mb-4">Top Predictor</h2>
-            <TopPredictor
-            name="Leo Messi"
-            profileIcon="https://randomuser.me/api/portraits/men/32.jpg"
-            correctRate={88}
-            favTeam="Inter Miami"
-            />
+            {topUser ? (
+                <TopPredictor
+                    userId={topUser.user_id}
+                    name={topUser.name}
+                    profileIcon={topUser.profile}
+                    point={topUser.total_points}
+                    favTeam={topUser.fav_team || "N/A"}
+                    favPlayer={topUser.fav_player || "N/A"}
+                    clickable={true}
+                    onClick={() => navigate("/leaderboard")}
+                />
+            ) : (
+            <p className="text-center text-gray-600">No top predictor available.</p>
+            )}
 
             <section>
                 <h2 className="text-xl font-bold ml-4 mt-8 mb-4">Following Users' Trips</h2>

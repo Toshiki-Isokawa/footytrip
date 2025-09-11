@@ -22,7 +22,7 @@ function Account() {
     const [favPlayer, setFavPlayer] = useState("");
     const [profileImage, setProfileImage] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(
-        user.profile ? `http://127.0.0.1:5000/static/profiles/${user.profile}` : null
+        user.profile ? `http://127.0.0.1:5000/static/uploads/profiles/${user.profile}` : null
         );
     const navigate = useNavigate();
     const from = location.state?.from || "/";
