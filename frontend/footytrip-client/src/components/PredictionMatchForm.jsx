@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import MatchPreview from "./MatchPreview";
 
-const PredictionMatchForm = ({ match, onChange, onRemove, initialData }) => {
+const PredictionMatchForm = ({ match, onChange, onRemove, initialData, removable }) => {
   const [logos, setLogos] = useState({ home: null, away: null });
   const [stadium, setStadium] = useState(null);
   const [formData, setFormData] = useState({
@@ -74,14 +74,16 @@ const PredictionMatchForm = ({ match, onChange, onRemove, initialData }) => {
   return (
     <div className="relative bg-white shadow-md rounded-2xl p-4 my-6">
 
-        {/* Close button (only if removable) */}
+        {/* Close button */}
         <button
-        className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
-        type="button"
-        onClick={() => onRemove(match.match_id)}
+            className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+            type="button"
+            onClick={() => onRemove(match.match_id)}
         >
-        <X size={18} />
+            <X size={18} />
         </button>
+
+
       {/* Match preview */}
       <MatchPreview
         home={match.home_team.name}

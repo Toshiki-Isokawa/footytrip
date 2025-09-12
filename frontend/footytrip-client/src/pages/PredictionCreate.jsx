@@ -1,6 +1,8 @@
 import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../contexts/AuthContext";
+import Header from "../components/Header";
+import NaviBar from "../components/NaviBar"
 import PredictionMatchForm from "../components/PredictionMatchForm";
 
 const PredictionCreate = () => {
@@ -121,7 +123,6 @@ const PredictionCreate = () => {
   };
 
   const handleRemoveMatch = (matchId) => {
-    if (isEditing) return;
     setMatches(matches.filter((m) => m.match_id !== matchId));
     setPredictions((prev) => {
       const updated = { ...prev };
@@ -177,74 +178,77 @@ const PredictionCreate = () => {
 
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">
-        {isEditing ? "Edit Prediction" : "Create Prediction"}
-      </h1>
+    <>
+        <Header />
+        <NaviBar />
+        <div className="p-6 max-w-3xl mx-auto">
+        <h1 className="text-2xl font-bold mb-6">
+            {isEditing ? "Edit Prediction" : "Create Prediction"}
+        </h1>
 
-      {!isEditing && matches.length < 3 && (
-        <div className="mb-6 space-y-4">
-          <input
-            type="text"
-            value={leagueSearch}
-            onChange={(e) => setLeagueSearch(e.target.value)}
-            placeholder="Type to search league"
-            className="border rounded-lg px-3 py-2 w-full"
-          />
-          {filteredLeagues.length > 0 && (
-            <select
-              value={selectedLeague || ""}
-              onChange={handleLeagueSelect}
-              className="w-full border rounded-lg px-3 py-2 mt-2"
+        {matches.length < 3 && (
+            <div className="mb-6 space-y-4">
+            <input
+                type="text"
+                value={leagueSearch}
+                onChange={(e) => setLeagueSearch(e.target.value)}
+                placeholder="Type to search league"
+                className="border rounded-lg px-3 py-2 w-full"
+            />
+            {filteredLeagues.length > 0 && (
+                <select
+                value={selectedLeague || ""}
+                onChange={handleLeagueSelect}
+                className="w-full border rounded-lg px-3 py-2 mt-2"
+                >
+                <option value="">Select League</option>
+                {filteredLeagues.map((league) => (
+                    <option key={league.id} value={league.id}>
+                    {league.name} ({league.country})
+                    </option>
+                ))}
+                </select>
+            )}
+            {selectedLeague && availableMatchesForLeague.length > 0 && (
+                <select
+                value={selectedMatch || ""}
+                onChange={handleMatchSelect}
+                className="w-full border rounded-lg px-3 py-2 mt-2"
+                >
+                <option value="">Select Match</option>
+                {availableMatchesForLeague.map((m) => (
+                    <option key={m.match_id} value={m.match_id}>
+                    {m.home_team.name} vs {m.away_team.name} –{" "}
+                    {m.kickoff_time}
+                    </option>
+                ))}
+                </select>
+            )}
+            </div>
+        )}
+
+        {matches.map((match) => (
+            <PredictionMatchForm
+            key={match.match_id}
+            match={match}
+            initialData={predictions[match.match_id] || {}}
+            onChange={handleMatchChange}
+            onRemove={handleRemoveMatch}
+            />
+        ))}
+
+        {matches.length > 0 && (
+            <div className="flex justify-end mt-6">
+            <button
+                onClick={handleSubmit}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700"
             >
-              <option value="">Select League</option>
-              {filteredLeagues.map((league) => (
-                <option key={league.id} value={league.id}>
-                  {league.name} ({league.country})
-                </option>
-              ))}
-            </select>
-          )}
-          {selectedLeague && availableMatchesForLeague.length > 0 && (
-            <select
-              value={selectedMatch || ""}
-              onChange={handleMatchSelect}
-              className="w-full border rounded-lg px-3 py-2 mt-2"
-            >
-              <option value="">Select Match</option>
-              {availableMatchesForLeague.map((m) => (
-                <option key={m.match_id} value={m.match_id}>
-                  {m.home_team.name} vs {m.away_team.name} –{" "}
-                  {m.kickoff_time}
-                </option>
-              ))}
-            </select>
-          )}
+                {isEditing ? "Update Predictions" : "Submit Predictions"}
+            </button>
+            </div>
+        )}
         </div>
-      )}
-
-      {matches.map((match) => (
-        <PredictionMatchForm
-          key={match.match_id}
-          match={match}
-          initialData={predictions[match.match_id] || {}}
-          onChange={handleMatchChange}
-          onRemove={handleRemoveMatch}
-          removable={!isEditing}
-        />
-      ))}
-
-      {matches.length > 0 && (
-        <div className="flex justify-end mt-6">
-          <button
-            onClick={handleSubmit}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700"
-          >
-            {isEditing ? "Update Predictions" : "Submit Predictions"}
-          </button>
-        </div>
-      )}
-    </div>
+    </>
   );
 };
 

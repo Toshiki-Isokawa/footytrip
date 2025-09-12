@@ -71,45 +71,46 @@ const Prediction = () => {
       <Header />
       <NaviBar />
         <div className="p-6 space-y-6">
-        <h1 className="text-2xl font-bold">Your Predictions</h1>
+            <h1 className="text-2xl font-bold">Your Predictions</h1>
 
-        {/* Current Prediction */}
-        {currentPrediction ? (
-            <PredictionCard prediction={currentPrediction} />
-        ) : (
-            <p>You have not predicted yet for this week.</p>
-        )}
+            {/* Current Prediction */}
+            {currentPrediction ? (
+                <PredictionCard prediction={currentPrediction} />
+            ) : (
+                <p>You have not predicted yet for this week.</p>
+            )}
 
-        {/* Last Week Prediction */}
-        {lastPrediction ? (
-            <div>
-            <h2 className="text-xl font-semibold mt-6">Last Week</h2>
-            <PredictionCard prediction={lastPrediction} />
+            {/* Create Prediction button */}
+            <div className="mt-8 text-center">
+                {currentPrediction ? 
+                    <button
+                    onClick={() => navigate("/prediction/edit")}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-xl shadow hover:bg-blue-700 transition"
+                    > "Edit Prediction" </button>
+                    :
+                    <button
+                    onClick={() => navigate("/prediction/create")}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-xl shadow hover:bg-blue-700 transition"
+                    >
+                    "Create New Prediction"
+                    </button>
+                }
             </div>
-        ) : (
-            <p>No prediction found for last week.</p>
-        )}
 
-        {/* Link to history page */}
-        <a href="/prediction/history" className="text-blue-600 underline block mt-4">
-            Click here to see more prediction histories
-        </a>
-        {/* Create Prediction button */}
-        <div className="mt-8 text-center">
-            {currentPrediction ? 
-                <button
-                onClick={() => navigate("/prediction/edit")}
-                className="px-6 py-3 bg-blue-600 text-white rounded-xl shadow hover:bg-blue-700 transition"
-                > "Edit Prediction" </button>
-                :
-                <button
-                onClick={() => navigate("/prediction/create")}
-                className="px-6 py-3 bg-blue-600 text-white rounded-xl shadow hover:bg-blue-700 transition"
-                >
-                "Create New Prediction"
-                </button>
-            }
-            </div>
+            {/* Last Week Prediction */}
+            {lastPrediction ? (
+                <div>
+                <h2 className="text-xl font-semibold mt-6">Last Week</h2>
+                <PredictionCard prediction={lastPrediction} />
+                </div>
+            ) : (
+                <p>No prediction found for last week.</p>
+            )}
+
+            {/* Link to history page */}
+            <a href="/prediction/history" className="text-blue-600 underline block mt-4">
+                Click here to see more prediction histories
+            </a>
         </div>
     </>
   );
