@@ -41,8 +41,6 @@ def fetch_logo_helper(team_id):
                 db.session.rollback()
                 existing = TeamLogo.query.get(team_id)
                 return existing.logo_url if existing else logo_url
-            print("Fetched and cached logo for team_id:", team_id)
-            print("Logo URL:", logo_url)
             return logo_url
     except requests.exceptions.RequestException:
         return None

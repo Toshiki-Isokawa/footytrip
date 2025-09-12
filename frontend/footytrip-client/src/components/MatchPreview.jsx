@@ -1,9 +1,23 @@
-import React from "react";
+import { useNavigate } from "react-router-dom";
 
-const MatchPreview = ({ home, away, date, stadium, homeLogo, awayLogo }) => {
+const MatchPreview = ({ home, away, date, stadium, homeLogo, awayLogo, clickable = false, onClick }) => {
+  const navigate = useNavigate();
+  const handleClick = () => {
+    if (clickable) {
+      if (onClick) {
+        onClick();
+      } else {
+        navigate(`/prediction`);
+      }
+    }
+  };
+
   return (
     <div className="px-4 sm:px-6 md:px-8 lg:px-16">
-        <div className="max-w-2xl mx-auto bg-white shadow-md rounded-xl p-6 my-6 text-center">
+        <div className={`max-w-2xl mx-auto bg-white shadow-md rounded-xl p-6 my-6 text-center ${
+        clickable ? "cursor-pointer hover:bg-gray-50" : ""
+      }`} 
+      onClick={handleClick}>
             {/* Responsive team layout */}
             <div className="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-6 mb-4">
                 {/* Home team */}

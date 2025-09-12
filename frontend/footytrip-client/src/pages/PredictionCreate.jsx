@@ -215,7 +215,7 @@ const PredictionCreate = () => {
               {availableMatchesForLeague.map((m) => (
                 <option key={m.match_id} value={m.match_id}>
                   {m.home_team.name} vs {m.away_team.name} –{" "}
-                  {new Date(m.kickoff_time).toLocaleString()}
+                  {m.kickoff_time}
                 </option>
               ))}
             </select>
