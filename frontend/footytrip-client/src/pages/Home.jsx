@@ -15,6 +15,26 @@ const Home = () => {
     const { token } = useContext(AuthContext);
     const navigate = useNavigate();
     const [topUser, setTopUser] = useState(null);
+    const [upcomingMatch, setUpcomingMatch] = useState(null);
+
+    useEffect(() => {
+        const fetchUpcomingMatch = async () => {
+        try {
+            const res = await fetch("http://127.0.0.1:5000/api/upcoming");
+            const data = await res.json();
+
+            if (res.ok && data.status === "success") {
+                setUpcomingMatch(data.match);
+            } else {
+                console.warn("No upcoming match found:", data);
+            }
+        } catch (err) {
+            console.error("Failed to fetch upcoming match", err);
+        }
+        };
+
+        fetchUpcomingMatch();
+    }, []);
 
     useEffect(() => {
         setIsLoggedIn(!!token);
@@ -70,15 +90,20 @@ const Home = () => {
             <NaviBar />
 
             <h2 className="text-xl font-bold text-center mt-8 mb-4">Upcoming Matches</h2>
-            <MatchPreview
-            home="Barcelona"
-            away="Real Madrid"
-            homeLogo="https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg"
-            awayLogo="https://upload.wikimedia.org/wikipedia/en/5/56/Real_Madrid_CF.svg"
-            stadium="Camp Nou"
-            date="2025-05-03"
-            />
-
+                {upcomingMatch ? (
+                    <MatchPreview
+                        home={upcomingMatch.home_team.name}
+                        away={upcomingMatch.away_team.name}
+                        homeLogo={upcomingMatch.home_team.logo}
+                        awayLogo={upcomingMatch.away_team.logo}
+                        stadium={upcomingMatch.stadium || "TBD"}
+                        date={new Date(upcomingMatch.kickoff_time).toLocaleString()}
+                        clickable={true}
+                        onClick={() => navigate(`/prediction`)}
+                    />
+                ) : (
+                    <p className="text-center text-gray-500">Loading match...</p>
+                )}
             <h2 className="text-xl font-bold ml-4 mt-8 mb-4">Top Predictor</h2>
             {topUser ? (
                 <TopPredictor

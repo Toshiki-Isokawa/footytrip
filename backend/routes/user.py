@@ -229,25 +229,34 @@ def update_login():
     return jsonify({"msg": "Password updated successfully"}), 200
 
 
-@user_bp.route("/stadium")
-def get_stadium():
-    team_id = request.args.get("team_id")
+def fetch_stadium_helper(team_id):
     if not team_id:
-        return jsonify({"error": "Missing team_id parameter"}), 400
+        return None
 
     url = f"https://{RAPIDAPI_HOST}/football-league-team"
     params = {"teamid": team_id}
     response = requests.get(url, headers=HEADERS, params=params)
 
     if response.status_code != 200:
-        return jsonify({"error": "Failed to fetch stadium"}), 500
+        return None
 
     data = response.json()
     details = data.get("response", {}).get("details", {})
     sportsTeam = details.get("sportsTeamJSONLD", {})
     stadium = sportsTeam.get("location", {}).get("name")
 
-    print("Stadium:", stadium)  # Debugging line to check stadium name
+    return stadium
 
+
+@user_bp.route("/stadium")
+def get_stadium():
+    team_id = request.args.get("team_id")
+    if not team_id:
+        return jsonify({"error": "Missing team_id parameter"}), 400
+
+    stadium = fetch_stadium_helper(team_id)
+    if not stadium:
+        return jsonify({"error": "Failed to fetch stadium"}), 500
+
+    print("Stadium:", stadium)  # Debugging line
     return jsonify({"stadium": stadium})
-
