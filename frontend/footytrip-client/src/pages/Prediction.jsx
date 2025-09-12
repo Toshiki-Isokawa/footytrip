@@ -66,6 +66,9 @@ const Prediction = () => {
 
   if (loading) return <p>Loading...</p>;
 
+  const today = new Date().getDay();
+  const isDisabled = today === 5 || today === 6 || today === 0;
+
   return (
     <>
       <Header />
@@ -82,19 +85,31 @@ const Prediction = () => {
 
             {/* Create Prediction button */}
             <div className="mt-8 text-center">
-                {currentPrediction ? 
+            {currentPrediction ? (
+                <button
+                    onClick={() => !isDisabled && navigate("/prediction/edit")}
+                    disabled={isDisabled}
+                    className={`px-6 py-3 rounded-xl shadow transition ${
+                        isDisabled
+                        ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                        : "bg-blue-600 text-white hover:bg-blue-700"
+                    }`}
+                >
+                    Edit Prediction
+                </button>
+                ) : (
                     <button
-                    onClick={() => navigate("/prediction/edit")}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-xl shadow hover:bg-blue-700 transition"
-                    > "Edit Prediction" </button>
-                    :
-                    <button
-                    onClick={() => navigate("/prediction/create")}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-xl shadow hover:bg-blue-700 transition"
+                        onClick={() => !isDisabled && navigate("/prediction/create")}
+                        disabled={isDisabled}
+                        className={`px-6 py-3 rounded-xl shadow transition ${
+                            isDisabled
+                            ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                            : "bg-blue-600 text-white hover:bg-blue-700"
+                        }`}
                     >
-                    "Create New Prediction"
+                        Create New Prediction
                     </button>
-                }
+                )}
             </div>
 
             {/* Last Week Prediction */}
