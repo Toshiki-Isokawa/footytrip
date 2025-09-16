@@ -16,63 +16,67 @@ const Home = () => {
     const navigate = useNavigate();
     const [topUser, setTopUser] = useState(null);
     const [upcomingMatch, setUpcomingMatch] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchUpcomingMatch = async () => {
-        try {
-            const res = await fetch("http://127.0.0.1:5000/api/upcoming");
-            const data = await res.json();
-
-            if (res.ok && data.status === "success") {
-                setUpcomingMatch(data.match);
-            } else {
-                console.warn("No upcoming match found:", data);
+        const fetchData = async () => {
+            if (!token) {
+                setIsLoggedIn(false);
+                setLoading(false);
+                return;
             }
-        } catch (err) {
-            console.error("Failed to fetch upcoming match", err);
-        }
-        };
 
-        fetchUpcomingMatch();
-    }, []);
-
-    useEffect(() => {
-        setIsLoggedIn(!!token);
-
-        if (token) {
-            // Fetch the logged-in user's ID first
-            fetch("http://127.0.0.1:5000/api/me", {
-                headers: { Authorization: `Bearer ${token}` },
-            })
-            .then(res => res.json())
-            .then(data => {
-                const userId = data.login.user_id;
-                // Fetch trips of followed users
-                return fetch(`http://127.0.0.1:5000/api/users/${userId}/feed`, {
+            try {
+                // Check if token is valid
+                const res = await fetch("http://127.0.0.1:5000/api/me", {
                     headers: { Authorization: `Bearer ${token}` },
                 });
-            })
-            .then(res => res.json())
-            .then(feedTrips => setTrips(feedTrips))
-            .catch(err => console.error("Failed to fetch feed trips:", err));
-        }
-    }, []);
 
-    useEffect(() => {
-        const fetchTopUser = async () => {
-            try {
-            const res = await fetch("http://127.0.0.1:5000/api/predictions/leaderboard/overall");
-            const data = await res.json();
-            if (res.ok && data.length > 0) {
-                setTopUser(data[0]); // top 1 user
-            }
+                if (!res.ok) throw new Error("Invalid token");
+
+                const data = await res.json();
+                setIsLoggedIn(true);
+
+                const feedRes = await fetch(
+                    `http://127.0.0.1:5000/api/users/${data.login.user_id}/feed`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                if (feedRes.ok) {
+                    setTrips(await feedRes.json());
+                }
+
+                const upcomingRes = await fetch("http://127.0.0.1:5000/api/upcoming");
+                if (upcomingRes.ok) {
+                const matchData = await upcomingRes.json();
+                if (matchData.status === "success") {
+                    setUpcomingMatch(matchData.match);
+                }
+                }
+
+                const leaderboardRes = await fetch(
+                    "http://127.0.0.1:5000/api/predictions/leaderboard/overall"
+                );
+                if (leaderboardRes.ok) {
+                    const leaderboard = await leaderboardRes.json();
+                if (leaderboard.length > 0) {
+                    setTopUser(leaderboard[0]);
+                }
+                }
             } catch (err) {
-            console.error("Failed to fetch top user", err);
+                console.warn("User not logged in or token invalid:", err);
+                setIsLoggedIn(false);
+            } finally {
+                setLoading(false);
             }
         };
 
-        fetchTopUser();
-    }, []);
+        fetchData();
+    }, [token]);
+
+    if (loading) {
+        return <p className="text-center mt-6">Loading...</p>;
+    }
+
 
     if (!isLoggedIn) {
         return (

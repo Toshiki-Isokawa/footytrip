@@ -3,6 +3,7 @@ import { AuthContext } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import NaviBar from "../components/NaviBar";
+import LoginModal from "../components/LoginModal";
 
 function FindFooty() {
   const { token } = useContext(AuthContext);
@@ -11,6 +12,8 @@ function FindFooty() {
   const [allUsers, setAllUsers] = useState([]);
   const [loggedInUser, setLoggedInUser] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [user, setUser] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   // Fetch all users + logged in user
   useEffect(() => {
@@ -33,9 +36,16 @@ function FindFooty() {
             ...meData.login,
         };
         setLoggedInUser(mergedUser);
+        if (meData.login || meData.user) {
+          setUser(mergedUser);
+        }
+        if (!meData.login || !meData.user) {
+          setShowModal(true);
+        }
 
         } catch (err) {
-        console.error("Error fetching users:", err);
+          setShowModal(true);
+          console.error("Error fetching users:", err);
         }
     };
 
@@ -64,6 +74,20 @@ function FindFooty() {
           u.fav_team === loggedInUser.fav_team
       )
     : [];
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    navigate("/login");
+  };
+
+  if (!user ) {
+    return (
+      <div className="min-h-screen bg-[#a0ddd6] flex items-center justify-center">
+        {showModal && <LoginModal onClose={handleCloseModal} />}
+        {!showModal && <p className="text-lg">Loading...</p>}
+      </div>
+    );
+  }
 
   return (
     <>

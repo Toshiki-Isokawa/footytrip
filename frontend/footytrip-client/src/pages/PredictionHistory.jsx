@@ -4,6 +4,7 @@ import { AuthContext } from "../contexts/AuthContext";
 import PredictionCard from "../components/PredictionCard";
 import Header from "../components/Header";
 import NaviBar from "../components/NaviBar";
+import LoginModal from "../components/LoginModal";
 
 const PredictionHistory = () => {
   const { token } = useContext(AuthContext);
@@ -13,9 +14,10 @@ const PredictionHistory = () => {
   const [currentWeek, setCurrentWeek] = useState(null);
   const [prediction, setPrediction] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [realCurrentWeek, setRealCurrentWeek] = useState(null);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+
 
   // Fetch logged-in userId
   useEffect(() => {
@@ -24,15 +26,17 @@ const PredictionHistory = () => {
         const res = await fetch("http://127.0.0.1:5000/api/check", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!res.ok) throw new Error("Failed to fetch user_id");
+        if (!res.ok) {
+          setShowModal(true);
+          throw new Error("Failed to fetch user_id");
+        }
         const data = await res.json();
         setUserId(data.user_id);
       } catch (err) {
+        setShowModal(true);
         console.error("Error fetching user_id:", err);
-        setError("Failed to load user data.");
       }
     };
-
     if (token) fetchUserId();
   }, [token]);
 
@@ -55,7 +59,6 @@ const PredictionHistory = () => {
         setPrediction(data);
       } catch (err) {
         console.error("Error fetching prediction:", err);
-        setError("Failed to fetch prediction.");
       } finally {
         setLoading(false);
       }
@@ -115,8 +118,19 @@ const PredictionHistory = () => {
     setCurrentWeek((prev) => prev + 1);
   };
 
-  if (!token) return <p>Please log in to view predictions.</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
+  const handleCloseModal = () => {
+    setShowModal(false);
+    navigate("/login");
+  };
+
+  if (!userId) {
+    return (
+      <div className="min-h-screen bg-[#a0ddd6] flex items-center justify-center">
+        {showModal && <LoginModal onClose={handleCloseModal} />}
+        {!showModal && <p className="text-lg">Loading...</p>}
+      </div>
+    );
+  }
 
   return (
     <>

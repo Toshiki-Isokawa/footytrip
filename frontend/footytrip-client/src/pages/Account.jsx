@@ -1,8 +1,10 @@
 // src/pages/Account.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { AuthContext } from "../contexts/AuthContext";
 
 function Account() {
+    const { token } = useContext(AuthContext);
     const location = useLocation();
     const user = location.state?.user || {};
     const [name, setName] = useState(user.name || "");
@@ -26,7 +28,6 @@ function Account() {
         );
     const navigate = useNavigate();
     const from = location.state?.from || "/";
-    const token = localStorage.getItem("access_token");
     const [isEditing, setIsEditing] = useState(false);
 
     // Fetch all leagues once
@@ -69,8 +70,9 @@ function Account() {
             }
         })
         .catch(err => console.error("Failed to fetch user account:", err));
-        
-    }, [token]);
+        alert("Please log in again");
+        navigate("/login");
+    }, [token, navigate]);
 
     // Fetch teams when a league is selected
     useEffect(() => {

@@ -1,8 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
+import { AuthContext } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import NaviBar from "../components/NaviBar";
 import TopPredictor from "../components/TopPredictor";
+import LoginModal from "../components/LoginModal";
+
 
 const Leaderboard = () => {
   const [currentWeek, setCurrentWeek] = useState(null);
@@ -10,6 +13,14 @@ const Leaderboard = () => {
   const [overallLeaders, setOverallLeaders] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { token } = useContext(AuthContext);
+  const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    if (!token) {
+      setShowModal(true);
+    }
+  }, [token]);
 
   // Fetch current week from backend
   useEffect(() => {
@@ -62,6 +73,20 @@ const Leaderboard = () => {
   const handleNextWeek = () => {
     setCurrentWeek((prev) => prev + 1);
   };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    navigate("/login");
+  };
+
+  if (!token) {
+    return (
+      <div className="min-h-screen bg-[#a0ddd6] flex items-center justify-center">
+        {showModal && <LoginModal onClose={handleCloseModal} />}
+        {!showModal && <p className="text-lg">Loading...</p>}
+      </div>
+    );
+  }
 
   return (
     <>

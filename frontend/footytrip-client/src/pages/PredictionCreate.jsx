@@ -85,11 +85,13 @@ const PredictionCreate = () => {
         }
       } catch (err) {
         console.error("Error fetching user or prediction:", err);
+        alert("Please log in again");
+        navigate("/login");
       }
     };
 
     fetchUserAndPrediction();
-  }, [token]);
+  }, [token, navigate]);
 
   // Filter leagues based on search and available matches
   const filteredLeagues = allLeagues.filter(

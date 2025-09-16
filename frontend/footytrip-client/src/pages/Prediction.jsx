@@ -4,6 +4,7 @@ import Header from "../components/Header";
 import NaviBar from "../components/NaviBar"
 import { useNavigate } from "react-router-dom";
 import PredictionCard from "../components/PredictionCard";
+import LoginModal from "../components/LoginModal";
 
 const Prediction = () => {
   const { token } = useContext(AuthContext);
@@ -11,7 +12,7 @@ const Prediction = () => {
   const [userId, setUserId] = useState(null);
   const [currentPrediction, setCurrentPrediction] = useState(null);
   const [lastPrediction, setLastPrediction] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
 
   // Step 1: Fetch user_id from /api/check
   useEffect(() => {
@@ -28,14 +29,21 @@ const Prediction = () => {
           setUserId(data.user_id);
         } else {
           console.error("Failed to fetch user_id");
+          setShowModal(true);
         }
       } catch (err) {
-        console.error("Error fetching user_id:", err);
+        setShowModal(true);
       }
     };
 
     if (token) fetchUserId();
-  }, [token]);
+  }, [token, navigate]);
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    navigate("/login");
+  };
+
 
   // Step 2: Fetch predictions once user_id is available
   useEffect(() => {
@@ -56,18 +64,25 @@ const Prediction = () => {
         }
       } catch (err) {
         console.error("Error fetching predictions:", err);
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchPredictions();
   }, [userId]);
 
-  if (loading) return <p>Loading...</p>;
+  // if (loading) return <p>Loading...</p>;
 
   const today = new Date().getDay();
   const isDisabled = today === 5 || today === 6 || today === 0;
+
+  if (!userId) {
+    return (
+      <div className="min-h-screen bg-[#a0ddd6] flex items-center justify-center">
+        {showModal && <LoginModal onClose={handleCloseModal} />}
+        {!showModal && <p className="text-lg">Loading...</p>}
+      </div>
+    );
+  }
 
   return (
     <>
