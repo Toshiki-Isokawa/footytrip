@@ -1,11 +1,15 @@
 // Schedule.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { AuthContext } from "../contexts/AuthContext";
 import axios from "axios";
 import Select from "react-select";
 import Header from "../components/Header";
 import NaviBar from "../components/NaviBar";
+import LoginModal from "../components/LoginModal";
+
 
 const Schedule = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -13,6 +17,10 @@ const Schedule = () => {
   const [loading, setLoading] = useState(false);
   const [leagues, setLeagues] = useState([]);
   const [selectedLeagues, setSelectedLeagues] = useState([]);
+  const { token } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   const formatDate = (date) => {
     const yyyy = date.getFullYear();
@@ -20,6 +28,25 @@ const Schedule = () => {
     const dd = String(date.getDate()).padStart(2, "0");
     return `${yyyy}${mm}${dd}`;
   };
+
+  useEffect(() => {
+  
+    fetch("http://127.0.0.1:5000/api/me", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.user && data.login) {
+          setUser(data);
+        } else {
+          setShowModal(true);
+          throw new Error();
+        }
+      })
+      .catch(() => {
+        setShowModal(true);
+      });
+  }, [token]);
 
   useEffect(() => {
     const fetchSchedule = async () => {
@@ -63,6 +90,20 @@ const Schedule = () => {
       : schedule.filter((league) =>
           selectedLeagues.some((sl) => sl.value.toString() === league.leagueId.toString())
         );
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    navigate("/login");
+  };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-[#a0ddd6] flex items-center justify-center">
+        {showModal && <LoginModal onClose={handleCloseModal} />}
+        {!showModal && <p className="text-lg">Loading...</p>}
+      </div>
+    );
+  }
 
   return (
     <>

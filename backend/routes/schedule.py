@@ -53,7 +53,6 @@ def fetch_logo():
         return jsonify({"error": "team_id is required"}), 400
 
     result = fetch_logo_helper(team_id)
-    print("Result from fetch_logo_helper:", result)
     if not result:
         return jsonify({"error": "Failed to fetch match result"}), 500
 

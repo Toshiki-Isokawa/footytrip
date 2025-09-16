@@ -4,6 +4,7 @@ import { AuthContext } from "../contexts/AuthContext";
 import Header from "../components/Header";
 import NaviBar from "../components/NaviBar"
 import TripCard from "../components/TripCard";
+import LoginModal from "../components/LoginModal";
 
 function Footy() {
   const { userId } = useParams();
@@ -20,6 +21,7 @@ function Footy() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [activeTab, setActiveTab] = useState("trips");
   const [me, setMe] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   // Fetch profile info & current user once
   useEffect(() => {
@@ -37,7 +39,11 @@ function Footy() {
 
         setUserInfo(userData);
         setMe(meData);
+        if (!meData.login || !meData.user) {
+          setShowModal(true);
+        };
       } catch (err) {
+        setShowModal(true);
         console.error("Error fetching base user profile:", err);
       }
     };
@@ -105,7 +111,21 @@ function Footy() {
     return date.toLocaleDateString("en-GB"); // dd-mm-yyyy
   };
 
+  const handleCloseModal = () => {
+    setShowModal(false);
+    navigate("/login");
+  };
+
   if (!userInfo) return <p className="text-center mt-6">Loading...</p>;
+
+  if (!me) {
+    return (
+      <div className="min-h-screen bg-[#a0ddd6] flex items-center justify-center">
+        {showModal && <LoginModal onClose={handleCloseModal} />}
+        {!showModal && <p className="text-lg">Loading...</p>}
+      </div>
+    );
+  }
 
   return (
     <>

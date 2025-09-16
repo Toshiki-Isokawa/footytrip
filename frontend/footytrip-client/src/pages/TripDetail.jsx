@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../contexts/AuthContext";
 import Header from "../components/Header";
 import NaviBar from "../components/NaviBar";
+import LoginModal from "../components/LoginModal";
 
 function TripDetail() {
   const { id } = useParams();
@@ -12,6 +13,7 @@ function TripDetail() {
   const [match, setMatch] = useState(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const { token } = useContext(AuthContext);
+  const [showModal, setShowModal] = useState(false);
 
   // Fetch logged-in user
   useEffect(() => {
@@ -20,10 +22,16 @@ function TripDetail() {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => res.json())
-        .then((data) => setUser(data.login))
+        .then((data) => {
+          if (data.login) {
+            setUser(data.login);
+          } else {
+            showModal(true);
+          }
+        })
         .catch((err) => console.error("Error fetching user:", err));
     }
-  }, [token]);
+  }, [token, showModal]);
 
   useEffect(() => {
     fetch(`http://127.0.0.1:5000/api/trips/${id}`)
@@ -105,6 +113,20 @@ function TripDetail() {
   if (!trip) return <p className="text-center mt-6">Loading...</p>;
 
   const isOwner = user && trip.user_id === user.user_id;
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    navigate("/login");
+  };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-[#a0ddd6] flex items-center justify-center">
+        {showModal && <LoginModal onClose={handleCloseModal} />}
+        {!showModal && <p className="text-lg">Loading...</p>}
+      </div>
+    );
+  }
 
   return (
     <>

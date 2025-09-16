@@ -1,10 +1,49 @@
+import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../contexts/AuthContext";
 import Header from "../components/Header";
 import NaviBar from "../components/NaviBar";
 import FavoriteTrips from "../components/FavoriteTrips";
+import LoginModal from "../components/LoginModal";
 
 const Trip = () => {
   const navigate = useNavigate();
+  const [showModal, setShowModal] = useState(false);
+  const [user, setUser] = useState(null);
+  const { token, loading } = useContext(AuthContext);
+  useEffect(() => {
+    fetch("http://127.0.0.1:5000/api/me", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.user && data.login) {
+          setUser(data);
+        } else {
+          setShowModal(true);
+          throw new Error();
+        }
+      })
+      .catch(() => {
+        setShowModal(true);
+      });
+  }, [token, navigate]);
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    navigate("/login");
+  };
+
+  if (loading) return null; 
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-[#a0ddd6] flex items-center justify-center">
+        {showModal && <LoginModal onClose={handleCloseModal} />}
+        {!showModal && <p className="text-lg">Loading...</p>}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#a0ddd6]">

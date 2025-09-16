@@ -5,37 +5,48 @@ import Header from "../components/Header";
 import NaviBar from "../components/NaviBar";
 import AccountInfoCard from "../components/AccountInfoCard";
 import LoginInfoCard from "../components/LoginInfoCard";
+import LoginModal from "../components/LoginModal";
 
 function Setting() {
     const { token, loading } = useContext(AuthContext);
     const [user, setUser] = useState(null);
     const navigate = useNavigate();
+    const [showModal, setShowModal] = useState(false);
 
-  useEffect(() => {
-    if (loading) return;
-    if (!token) {
-      navigate("/login", { state: { from: "/settings" } });
-      return;
-    }
+    useEffect(() => {
 
-    fetch("http://127.0.0.1:5000/api/me", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.user && data.login) {
-          setUser(data);
-        } else {
-          throw new Error();
-        }
+      fetch("http://127.0.0.1:5000/api/me", {
+        headers: { Authorization: `Bearer ${token}` },
       })
-      .catch(() => {
-        alert("Please log in again");
-        navigate("/login", { state: { from: "/settings" } });
-      });
-  }, [loading, token]);
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.user && data.login) {
+            setUser(data);
+          } else {
+            setShowModal(true);
+            throw new Error();
+          }
+        })
+        .catch(() => {
+          setShowModal(true);
+        });
+    }, [loading, token]);
 
-  if (!user) return <div>Loading...</div>;
+  const handleCloseModal = () => {
+    setShowModal(false);
+    navigate("/login");
+  };
+
+  if (loading) return null; 
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-[#a0ddd6] flex items-center justify-center">
+        {showModal && <LoginModal onClose={handleCloseModal} />}
+        {!showModal && <p className="text-lg">Loading...</p>}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#a0ddd6]">
