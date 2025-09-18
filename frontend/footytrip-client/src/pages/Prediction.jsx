@@ -9,12 +9,12 @@ import LoginModal from "../components/LoginModal";
 const Prediction = () => {
   const { token } = useContext(AuthContext);
   const navigate = useNavigate();
+  const [realCurrentWeek, setRealCurrentWeek] = useState(null);
   const [userId, setUserId] = useState(null);
   const [currentPrediction, setCurrentPrediction] = useState(null);
   const [lastPrediction, setLastPrediction] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
-  // Step 1: Fetch user_id from /api/check
   useEffect(() => {
     const fetchUserId = async () => {
       try {
@@ -44,8 +44,21 @@ const Prediction = () => {
     navigate("/login");
   };
 
+  useEffect(() => {
+    const fetchWeek = async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:5000/api/predictions/week");
+        if (res.ok) {
+          const data = await res.json();
+          setRealCurrentWeek(data.week);
+        }
+      } catch (err) {
+        console.error("Failed to fetch current week", err);
+      }
+    };
+    fetchWeek();
+  }, []);
 
-  // Step 2: Fetch predictions once user_id is available
   useEffect(() => {
     const fetchPredictions = async () => {
       if (!userId) return;
@@ -70,7 +83,6 @@ const Prediction = () => {
     fetchPredictions();
   }, [userId]);
 
-  // if (loading) return <p>Loading...</p>;
 
   const today = new Date().getDay();
   const isDisabled = today === 5 || today === 6 || today === 0;
@@ -138,9 +150,10 @@ const Prediction = () => {
             )}
 
             {/* Link to history page */}
-            <a href="/prediction/history" className="text-blue-600 underline block mt-4">
-                Click here to see more prediction histories
+            <a href={`/prediction/history?week=${realCurrentWeek}`} className="text-blue-600 underline block mt-4">
+              Click here to see more prediction histories
             </a>
+
         </div>
     </>
   );
