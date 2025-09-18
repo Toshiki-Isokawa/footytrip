@@ -20,7 +20,6 @@ const PredictionHistory = () => {
   const [isCalculating, setIsCalculating] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
-  // 1) Fetch real current week (always run once) and ensure currentWeek has fallback
   useEffect(() => {
     const fetchRealWeek = async () => {
       try {
@@ -41,7 +40,6 @@ const PredictionHistory = () => {
     fetchRealWeek();
   }, []);
 
-  // 2) Fetch user id using /api/check (auth). Show modal if token missing/invalid.
   useEffect(() => {
     if (!token) {
       // not logged in -> show modal
@@ -69,7 +67,6 @@ const PredictionHistory = () => {
     fetchUserId();
   }, [token]);
 
-  // 3) Fetch prediction only when userId AND a valid currentWeek are available
   useEffect(() => {
     if (!userId || currentWeek == null) return;
 
@@ -99,7 +96,6 @@ const PredictionHistory = () => {
     fetchPrediction();
   }, [userId, currentWeek, token]);
 
-  // handlers
   const handlePrevWeek = () => {
     setCurrentWeek((prev) => (typeof prev === "number" ? Math.max(1, prev - 1) : prev));
   };
@@ -113,7 +109,6 @@ const PredictionHistory = () => {
     navigate("/login");
   };
 
-  // Safe render while waiting for userId (or if modal is visible)
   if (!userId) {
     return (
       <div className="min-h-screen bg-[#a0ddd6] flex items-center justify-center">
@@ -123,7 +118,6 @@ const PredictionHistory = () => {
     );
   }
 
-  // Render main content
   return (
     <>
       <Header />
