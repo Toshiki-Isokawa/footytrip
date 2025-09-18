@@ -9,6 +9,7 @@ function Register() {
   const login = location.state?.login || {};
   const [email, setEmail] = useState(login.email || "");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState(""); // New state
   const navigate = useNavigate();
   const isEditMode = location.state?.from === "/settings";
 
@@ -20,6 +21,11 @@ function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (password !== confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
 
     console.log("Register page loaded");
     console.log("location.state:", location.state);
@@ -78,6 +84,14 @@ function Register() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full border p-2 rounded"
+          />
+          <input
+            type="password"
+            placeholder="Confirm Password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="w-full border p-2 rounded"
+            required
           />
           <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded">
             Register

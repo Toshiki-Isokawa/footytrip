@@ -70,9 +70,7 @@ function Account() {
             }
         })
         .catch(err => console.error("Failed to fetch user account:", err));
-        alert("Please log in again");
-        navigate("/login");
-    }, [token, navigate]);
+    }, [token]);
 
     // Fetch teams when a league is selected
     useEffect(() => {
