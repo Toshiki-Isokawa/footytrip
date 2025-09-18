@@ -1,26 +1,54 @@
 import React, { useEffect, useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../contexts/AuthContext";
-import PredictionCard from "../components/PredictionCard";
 import Header from "../components/Header";
 import NaviBar from "../components/NaviBar";
 import LoginModal from "../components/LoginModal";
+import PredictionCard from "../components/PredictionCard";
 
 const PredictionHistory = () => {
   const { token } = useContext(AuthContext);
   const navigate = useNavigate();
-
+  const location = useLocation();
+  const query = new URLSearchParams(location.search);
+  const initialWeek = query.get("week");
   const [userId, setUserId] = useState(null);
-  const [currentWeek, setCurrentWeek] = useState(null);
   const [prediction, setPrediction] = useState(null);
   const [loading, setLoading] = useState(false);
   const [realCurrentWeek, setRealCurrentWeek] = useState(null);
+  const [currentWeek, setCurrentWeek] = useState(initialWeek ? Number(initialWeek) : null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
-
-  // Fetch logged-in userId
+  // 1) Fetch real current week (always run once) and ensure currentWeek has fallback
   useEffect(() => {
+    const fetchRealWeek = async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:5000/api/predictions/week", {
+          method: "GET",
+        });
+        if (!res.ok) throw new Error("Failed to fetch real week");
+        const data = await res.json();
+        if (typeof data.week === "number") {
+          setRealCurrentWeek(data.week);
+          // if currentWeek not set yet, default it to real week
+          setCurrentWeek((prev) => (prev == null ? data.week : prev));
+        }
+      } catch (err) {
+        console.error("Error fetching real current week:", err);
+      }
+    };
+    fetchRealWeek();
+  }, []);
+
+  // 2) Fetch user id using /api/check (auth). Show modal if token missing/invalid.
+  useEffect(() => {
+    if (!token) {
+      // not logged in -> show modal
+      setShowModal(true);
+      return;
+    }
+
     const fetchUserId = async () => {
       try {
         const res = await fetch("http://127.0.0.1:5000/api/check", {
@@ -37,21 +65,24 @@ const PredictionHistory = () => {
         console.error("Error fetching user_id:", err);
       }
     };
-    if (token) fetchUserId();
+
+    fetchUserId();
   }, [token]);
 
-  // Fetch prediction for given week
+  // 3) Fetch prediction only when userId AND a valid currentWeek are available
   useEffect(() => {
-    if (!userId || !currentWeek) return;
+    if (!userId || currentWeek == null) return;
 
     const fetchPrediction = async () => {
       setLoading(true);
       try {
         const res = await fetch(
           `http://127.0.0.1:5000/api/predictions/fetch?user_id=${userId}&week=${currentWeek}`,
-          { method: "GET" },
+          { method: "GET", headers: { Authorization: `Bearer ${token}` } }
         );
+
         if (!res.ok) {
+          // no prediction for that week or server returned error
           setPrediction(null);
           return;
         }
@@ -59,63 +90,22 @@ const PredictionHistory = () => {
         setPrediction(data);
       } catch (err) {
         console.error("Error fetching prediction:", err);
+        setPrediction(null);
       } finally {
         setLoading(false);
       }
     };
 
     fetchPrediction();
-  }, [userId, currentWeek]);
+  }, [userId, currentWeek, token]);
 
-  // Get latest week once userId is known
-  useEffect(() => {
-    if (!userId) return;
-    const fetchLatestWeek = async () => {
-      try {
-        // Call without week param to get current week default
-        const res = await fetch(
-          `http://127.0.0.1:5000/api/predictions/fetch?user_id=${userId}`,
-          { 
-            headers: { Authorization: `Bearer ${token}` },
-            method: "GET",
-         }
-        );
-        if (res.ok) {
-          const data = await res.json();
-          setCurrentWeek(data.week);
-          setPrediction(data);
-        }
-      } catch (err) {
-        console.error("Error fetching latest week:", err);
-      }
-    };
-    fetchLatestWeek();
-  }, [userId, token]);
-
-  useEffect(() => {
-    const fetchRealWeek = async () => {
-        try {
-        const res = await fetch("http://127.0.0.1:5000/api/predictions/week", {
-            method: "GET",
-        });
-        if (res.ok) {
-            const data = await res.json();
-            setRealCurrentWeek(data.week);
-        }
-        } catch (err) {
-        console.error("Error fetching real current week:", err);
-        }
-    };
-
-    fetchRealWeek();
-    }, []);
-
+  // handlers
   const handlePrevWeek = () => {
-    setCurrentWeek((prev) => (prev > 1 ? prev - 1 : prev));
+    setCurrentWeek((prev) => (typeof prev === "number" ? Math.max(1, prev - 1) : prev));
   };
 
   const handleNextWeek = () => {
-    setCurrentWeek((prev) => prev + 1);
+    setCurrentWeek((prev) => (typeof prev === "number" ? prev + 1 : prev));
   };
 
   const handleCloseModal = () => {
@@ -123,6 +113,7 @@ const PredictionHistory = () => {
     navigate("/login");
   };
 
+  // Safe render while waiting for userId (or if modal is visible)
   if (!userId) {
     return (
       <div className="min-h-screen bg-[#a0ddd6] flex items-center justify-center">
@@ -132,96 +123,88 @@ const PredictionHistory = () => {
     );
   }
 
+  // Render main content
   return (
     <>
-        <Header />
-        <NaviBar />
-        <div className="max-w-4xl mx-auto px-4 py-6">
+      <Header />
+      <NaviBar />
+      <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Week Selector */}
         <div className="flex items-center justify-center space-x-6 mb-6">
-            <button
-            onClick={handlePrevWeek}
-            className="px-3 py-1 bg-gray-200 rounded-lg hover:bg-gray-300"
-            >
+          <button onClick={handlePrevWeek} className="px-3 py-1 bg-gray-200 rounded-lg hover:bg-gray-300">
             ◀
-            </button>
-            <span className="text-xl font-bold">Week {currentWeek}</span>
-            <button
-            onClick={handleNextWeek}
-            className="px-3 py-1 bg-gray-200 rounded-lg hover:bg-gray-300"
-            >
+          </button>
+          <span className="text-xl font-bold">
+            Week {currentWeek != null ? currentWeek : "—"}
+          </span>
+          <button onClick={handleNextWeek} className="px-3 py-1 bg-gray-200 rounded-lg hover:bg-gray-300">
             ▶
-            </button>
+          </button>
         </div>
 
         {/* Prediction Content */}
         {loading ? (
-            <p className="text-center">Loading...</p>
+          <p className="text-center">Loading...</p>
         ) : prediction ? (
-            <PredictionCard prediction={prediction} />
+          <PredictionCard prediction={prediction} />
         ) : (
-            <p className="text-center text-gray-600">
-            No prediction found for this week.
-            </p>
+          <p className="text-center text-gray-600">No prediction found for this week.</p>
         )}
 
         {/* Calculate Points Button */}
-        {prediction && 
-            prediction.status !== "scored" && 
-            realCurrentWeek !== null &&
-            prediction.week < realCurrentWeek && (
+        {prediction &&
+          prediction.status !== "scored" &&
+          realCurrentWeek != null &&
+          typeof prediction.week === "number" &&
+          prediction.week < realCurrentWeek && (
             <div className="text-center mt-4">
-                <button
+              <button
                 className={`px-6 py-2 rounded-lg text-white transition ${
-                    isCalculating ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
+                  isCalculating ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
                 }`}
                 disabled={isCalculating}
                 onClick={async () => {
-                    setIsCalculating(true);
-                    try {
+                  setIsCalculating(true);
+                  try {
                     const res = await fetch("http://127.0.0.1:5000/api/predictions/calc-points", {
-                        method: "POST",
-                        headers: { Authorization: `Bearer ${token}` },
+                      method: "POST",
+                      headers: { Authorization: `Bearer ${token}` },
                     });
                     const data = await res.json();
                     if (res.ok) {
-                        alert("Calculation completed successfully!");
-                        // Refresh current prediction
-                        const refreshRes = await fetch(
+                      alert("Calculation completed successfully!");
+                      // Refresh current prediction
+                      const refreshRes = await fetch(
                         `http://127.0.0.1:5000/api/predictions/fetch?user_id=${userId}&week=${prediction.week}`,
-                        { method: "GET" }
-                        );
-                        if (refreshRes.ok) {
-                            const refreshedData = await refreshRes.json();
-                            setPrediction(refreshedData);
-                        }
+                        { method: "GET", headers: { Authorization: `Bearer ${token}` } }
+                      );
+                      if (refreshRes.ok) {
+                        const refreshedData = await refreshRes.json();
+                        setPrediction(refreshedData);
+                      }
                     } else {
-                        alert(data.error || "Calculation failed.");
+                      alert(data.error || "Calculation failed.");
                     }
-                    } catch (err) {
+                  } catch (err) {
                     console.error(err);
-                        alert("Failed to calculate points.");
-                    }
-                    finally {
-                        setIsCalculating(false);
-                    }
+                    alert("Failed to calculate points.");
+                  } finally {
+                    setIsCalculating(false);
+                  }
                 }}
-                >
+              >
                 {isCalculating ? "Calculating..." : "Calculate Points"}
-                </button>
+              </button>
             </div>
-        )}
+          )}
 
         {/* Navigate to Prediction Main Page */}
         <div className="mt-8 text-center">
-            <button
-            onClick={() => navigate("/prediction")}
-            className="px-6 py-3 bg-blue-600 text-white rounded-xl shadow hover:bg-blue-700 transition"
-            >
+          <button onClick={() => navigate("/prediction")} className="px-6 py-3 bg-blue-600 text-white rounded-xl shadow hover:bg-blue-700 transition">
             Go to Prediction Page
-            </button>
+          </button>
         </div>
-        </div>
+      </div>
     </>
   );
 };
