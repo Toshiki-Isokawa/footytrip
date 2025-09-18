@@ -21,6 +21,7 @@ const PredictionCreate = () => {
   const [matches, setMatches] = useState([]);
   const [predictions, setPredictions] = useState({});
   const [isEditing, setIsEditing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch leagues + available matches
   useEffect(() => {
@@ -138,6 +139,7 @@ const PredictionCreate = () => {
   };
 
   const handleSubmit = async () => {
+    setIsSubmitting(true);
     try {
         const matchesPayload = matches
         .map((match) => {
@@ -175,8 +177,10 @@ const PredictionCreate = () => {
     } catch (err) {
         console.error(err);
         alert("Error submitting predictions");
+    } finally {
+      setIsSubmitting(false);
     }
-    };
+  };
 
 
   return (
@@ -241,12 +245,23 @@ const PredictionCreate = () => {
 
         {matches.length > 0 && (
             <div className="flex justify-end mt-6">
-            <button
+              <button
                 onClick={handleSubmit}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700"
-            >
-                {isEditing ? "Update Predictions" : "Submit Predictions"}
-            </button>
+                disabled={isSubmitting}
+                className={`px-6 py-2 rounded-lg shadow text-white transition ${
+                  isSubmitting
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700"
+                }`}
+              >
+                {isSubmitting
+                  ? isEditing
+                    ? "Updating..."
+                    : "Submitting..."
+                  : isEditing
+                    ? "Update Predictions"
+                    : "Submit Predictions"}
+              </button>
             </div>
         )}
         </div>
