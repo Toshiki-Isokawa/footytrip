@@ -20,8 +20,6 @@ function MatchDetail() {
         .then((res) => res.json())
         .then((data) => setUser(data.login))
         .catch((err) => console.error("Error fetching user:", err));
-        alert("Please log in again");
-        navigate("/login");
     }
   }, [token, navigate]);
 
