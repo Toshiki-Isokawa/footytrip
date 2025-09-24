@@ -16,47 +16,65 @@ HEADERS = {
     "x-rapidapi-key": RAPIDAPI_KEY,
 }
 
+# In-memory cache (process-level)
+logo_cache = {}
+
 def fetch_logo_helper(team_id):
+    """
+    Fetch logo URL for a team ID.
+    1. Check in-memory cache.
+    2. Check DB.
+    3. Fetch from RapidAPI if needed.
+    """
+    if not team_id:
+        return None
+
+    if team_id in logo_cache:
+        return logo_cache[team_id]
+
     team = TeamLogo.query.get(team_id)
     if team:
+        logo_cache[team_id] = team.logo_url
         return team.logo_url
 
-    # Fetch from API
     url = f"https://{RAPIDAPI_HOST}/football-team-logo?teamid={team_id}"
     try:
-        res = requests.get(url, headers=HEADERS)
+        res = requests.get(url, headers=HEADERS, timeout=5)
         res.raise_for_status()
         data = res.json()
         logo_url = data.get("response", {}).get("url")
         if logo_url:
-            new_team = TeamLogo(
-                team_id=team_id,
-                team_name="", 
-                logo_url=logo_url
-            )
+            new_team = TeamLogo(team_id=team_id, team_name="", logo_url=logo_url)
             db.session.add(new_team)
             try:
                 db.session.commit()
             except IntegrityError:
                 db.session.rollback()
                 existing = TeamLogo.query.get(team_id)
-                return existing.logo_url if existing else logo_url
+                logo_url = existing.logo_url if existing else logo_url
+
+            logo_cache[team_id] = logo_url
             return logo_url
-    except requests.exceptions.RequestException:
+    except requests.exceptions.RequestException as e:
         return None
+
     return None
 
 @schedule_bp.route("/logo", methods=["GET"])
 def fetch_logo():
+    """
+    Fetch logo URL for a team via team_id query parameter.
+    JSON response: {"logo_url": "..."}
+    """
     team_id = request.args.get("team_id", type=int)
     if not team_id:
         return jsonify({"error": "team_id is required"}), 400
 
-    result = fetch_logo_helper(team_id)
-    if not result:
+    logo_url = fetch_logo_helper(team_id)
+    if not logo_url:
         return jsonify({"error": "Failed to fetch match result"}), 500
 
-    return jsonify({"logo_url": result}), 200
+    return jsonify({"logo_url": logo_url}), 200
 
 
 LEAGUE_CACHE_TTL = 60 * 60  # 1 hour
@@ -89,6 +107,7 @@ def get_league_map():
 
     return _league_map
 
+
 @schedule_bp.route("/schedule", methods=["GET"])
 def get_schedule():
     """
@@ -100,17 +119,27 @@ def get_schedule():
     if not date:
         return jsonify({"error": "Missing 'date' query parameter"}), 400
 
-    url = f"https://{RAPIDAPI_HOST}/football-get-matches-by-date"
-    params = {"date": date}
-
     try:
-        res = requests.get(url, headers=HEADERS, params=params)
+        # Fetch matches from API
+        url = f"https://{RAPIDAPI_HOST}/football-get-matches-by-date"
+        params = {"date": date}
+        res = requests.get(url, headers=HEADERS, params=params, timeout=10)
         res.raise_for_status()
         data = res.json()
         matches = data.get("response", {}).get("matches", [])
 
-        # Normalize matches into leagues
         league_map = get_league_map()
+
+        team_ids = []
+        for m in matches:
+            for tid in [m.get("home", {}).get("id"), m.get("away", {}).get("id")]:
+                if tid and tid not in team_ids:
+                    team_ids.append(tid)
+
+        limited_team_ids = team_ids[:150]
+
+        logo_map = {tid: fetch_logo_helper(tid) for tid in limited_team_ids}
+
         leagues = {}
         for m in matches:
             league_id = m.get("leagueId")
@@ -120,7 +149,6 @@ def get_schedule():
             league_info = league_map.get(league_id, {"name": "Unknown", "country": ""})
             league_name = f"{league_info['name']} ({league_info['country']})"
 
-            # Determine match status
             status_info = m.get("status", {})
             if status_info.get("finished"):
                 status = "finished"
@@ -141,13 +169,13 @@ def get_schedule():
                     "id": home_team.get("id"),
                     "name": home_team.get("name"),
                     "score": home_team.get("score"),
-                    "logo": fetch_logo_helper(home_team.get("id"))
+                    "logo": logo_map.get(home_team.get("id"))
                 },
                 "away": {
                     "id": away_team.get("id"),
                     "name": away_team.get("name"),
                     "score": away_team.get("score"),
-                    "logo": fetch_logo_helper(away_team.get("id"))
+                    "logo": logo_map.get(away_team.get("id"))
                 },
             }
 

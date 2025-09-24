@@ -29,8 +29,8 @@ const PredictionCard = ({ prediction }) => {
   }, [prediction]);
 
   return (
-    <div className="bg-white shadow-md rounded-2xl p-4 w-full max-w-3xl mx-auto mb-6">
-      <h2 className="text-xl font-bold text-center mb-4">
+    <div className="bg-white shadow-md rounded-2xl p-2 sm:p-4 w-full max-w-3xl mx-auto mb-6">
+      <h2 className="text-lg sm:text-xl font-bold text-center mb-4">
         Week {prediction.week} ({prediction.status})
       </h2>
 
@@ -39,29 +39,31 @@ const PredictionCard = ({ prediction }) => {
           return (
             <div
               key={match.match_id}
-              className="flex items-center justify-between border rounded-xl p-3"
+              className="flex flex-col md:flex-row items-center justify-between border rounded-xl p-3 space-y-2 md:space-y-0"
             >
               {/* Home team */}
-              <div className="flex items-center space-x-2 w-1/3">
+              <div className="flex items-center space-x-2 w-full md:w-1/3 justify-center md:justify-start">
                 <img
                   src={logos[match.home_team.id]}
                   alt={match.home_team.name}
-                  className="w-10 h-10 object-contain"
+                  className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
                 />
-                <span className="font-medium">{match.home_team.name}</span>
+                <span className="font-medium text-sm sm:text-base">
+                  {match.home_team.name}
+                </span>
               </div>
 
               {/* Predicted vs Actual Scores */}
-              <div className="flex flex-col items-center w-1/3">
-                <span className="text-sm text-gray-500">Prediction</span>
-                <span className="font-bold">
+              <div className="flex flex-col items-center w-full md:w-1/3">
+                <span className="text-xs sm:text-sm text-gray-500">Prediction</span>
+                <span className="font-bold text-base sm:text-lg">
                   {match.score_home_prediction} - {match.score_away_prediction}
                 </span>
 
                 {prediction.status === "scored" && (
                   <>
-                    <span className="text-sm text-gray-500 mt-1">Actual</span>
-                    <span className="font-bold text-green-600">
+                    <span className="text-xs sm:text-sm text-gray-500 mt-1">Actual</span>
+                    <span className="font-bold text-green-600 text-base sm:text-lg">
                       {match.score_home_actual} - {match.score_away_actual}
                     </span>
                   </>
@@ -69,13 +71,13 @@ const PredictionCard = ({ prediction }) => {
               </div>
 
               {/* Away team */}
-              <div className="flex items-center justify-end space-x-2 w-1/3">
-                <span className="font-medium">{match.away_team.name}</span>
+              <div className="flex items-center space-x-2 w-full md:w-1/3 justify-center md:justify-end">
                 <img
                   src={logos[match.away_team.id]}
                   alt={match.away_team.name}
-                  className="w-10 h-10 object-contain"
+                  className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
                 />
+                <span className="font-medium text-sm sm:text-base">{match.away_team.name}</span>
               </div>
             </div>
           );
@@ -85,7 +87,7 @@ const PredictionCard = ({ prediction }) => {
       {/* Footer with points */}
       {prediction.status === "scored" && (
         <div className="text-center mt-4">
-          <p className="font-semibold">
+          <p className="font-semibold text-sm sm:text-base">
             Total Points:{" "}
             <span className="text-blue-600">{prediction.obtained_points}</span>
           </p>
@@ -93,6 +95,7 @@ const PredictionCard = ({ prediction }) => {
       )}
     </div>
   );
+
 };
 
 export default PredictionCard;
