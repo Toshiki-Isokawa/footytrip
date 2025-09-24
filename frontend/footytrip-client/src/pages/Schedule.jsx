@@ -20,6 +20,7 @@ const Schedule = () => {
   const { token } = useContext(AuthContext);
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [userLoading, setUserLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
 
   const formatDate = (date) => {
@@ -29,33 +30,48 @@ const Schedule = () => {
     return `${yyyy}${mm}${dd}`;
   };
 
+  // 🔹 Fetch user (runs in parallel)
   useEffect(() => {
-  
-    fetch("http://127.0.0.1:5000/api/me", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => {
+    const fetchUser = async () => {
+      setUserLoading(true);
+      try {
+        const res = await fetch("http://127.0.0.1:5000/api/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
         if (data.user && data.login) {
           setUser(data);
         } else {
           setShowModal(true);
-          throw new Error();
         }
-      })
-      .catch(() => {
+      } catch {
         setShowModal(true);
-      });
+      } finally {
+        setUserLoading(false);
+      }
+    };
+
+    if (token) fetchUser();
+    else setShowModal(true);
   }, [token]);
 
   useEffect(() => {
     const fetchSchedule = async () => {
       setLoading(true);
       try {
+        const startTime = performance.now();
+
         const dateStr = formatDate(selectedDate);
-        const res = await axios.get(`/api/schedule?date=${dateStr}`);
+        console.log(`[FETCH START] date=${dateStr} at ${new Date().toISOString()}`);
+
+        const res = await axios.get(`http://127.0.0.1:5000/api/schedule?date=${dateStr}`);
+
+        const endTime = performance.now();
+        console.log(`[FETCH END] took ${(endTime - startTime).toFixed(2)} ms`);
+
         if (res.data.status === "success") {
           setSchedule(res.data.schedule);
+          console.log(`[FETCH SUCCESS] ${res.data.schedule.length} leagues received`);
         }
       } catch (err) {
         console.error("Error fetching schedule:", err);
@@ -70,7 +86,7 @@ const Schedule = () => {
   useEffect(() => {
     const fetchLeagues = async () => {
       try {
-        const res = await axios.get("/api/leagues");
+        const res = await axios.get("http://127.0.0.1:5000/api/leagues");
         setLeagues(
           res.data.map((l) => ({
             value: l.id,
@@ -88,7 +104,9 @@ const Schedule = () => {
     selectedLeagues.length === 0
       ? schedule
       : schedule.filter((league) =>
-          selectedLeagues.some((sl) => sl.value.toString() === league.leagueId.toString())
+          selectedLeagues.some(
+            (sl) => sl.value.toString() === league.leagueId.toString()
+          )
         );
 
   const handleCloseModal = () => {
@@ -96,50 +114,41 @@ const Schedule = () => {
     navigate("/login");
   };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-[#a0ddd6] flex items-center justify-center">
-        {showModal && <LoginModal onClose={handleCloseModal} />}
-        {!showModal && <p className="text-lg">Loading...</p>}
-      </div>
-    );
-  }
-
   return (
     <>
-        <Header />
-        <NaviBar />
-        <div className="p-4">
+      <Header />
+      <NaviBar />
+      <div className="p-4">
         {/* Sticky filter bar */}
         <div className="sticky top-[120px] bg-[#a0ddd6] z-10 py-2 shadow-sm mb-4">
-            <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-4 px-4">
+          <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-4 px-4">
             {/* Date Picker */}
             <DatePicker
-                selected={selectedDate}
-                onChange={(date) => setSelectedDate(date)}
-                dateFormat="dd/MM/yyyy"
-                className="border rounded px-3 py-2"
+              selected={selectedDate}
+              onChange={(date) => setSelectedDate(date)}
+              dateFormat="dd/MM/yyyy"
+              className="border rounded px-3 py-2 w-full md:w-auto"
             />
 
             {/* League Multi-Select */}
             <div className="flex-1 w-full">
-                <Select
+              <Select
                 isMulti
                 options={leagues}
                 value={selectedLeagues}
                 onChange={setSelectedLeagues}
                 placeholder="Filter by league..."
-                />
+              />
             </div>
 
             {/* Clear Filter Button */}
             <button
-                onClick={() => setSelectedLeagues([])}
-                className="bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded"
+              onClick={() => setSelectedLeagues([])}
+              className="bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded w-full md:w-auto"
             >
-                Clear
+              Clear
             </button>
-            </div>
+          </div>
         </div>
 
         {/* Loading indicator */}
@@ -147,47 +156,70 @@ const Schedule = () => {
 
         {/* Display schedule */}
         <div className="max-w-4xl mx-auto px-4">
-            {!loading &&
+          {!loading &&
             filteredSchedule.map((league) => (
-                <div key={league.leagueId} className="mb-6">
-                <h2 className="text-xl font-bold mb-2">{league.leagueName}</h2>
+              <div key={league.leagueId} className="mb-6">
+                <h2 className="text-lg md:text-xl font-bold mb-2 text-center md:text-left">
+                  {league.leagueName}
+                </h2>
                 {league.matches.map((match) => (
-                    <div
+                  <div
                     key={match.id}
-                    className="flex justify-between border p-2 rounded mb-1"
-                    >
+                    className="flex flex-col md:flex-row items-center justify-between border p-3 rounded mb-2"
+                  >
                     {/* Home */}
                     <div className="flex items-center space-x-2">
-                        <img
+                      <img
                         src={match.home.logo}
                         alt={match.home.name}
-                        className="w-6 h-6 object-contain"
-                        />
-                        <span>{match.home.name}</span>
+                        className="w-8 h-8 object-contain"
+                      />
+                      <span className="text-sm md:text-base font-medium">
+                        {match.home.name}
+                      </span>
                     </div>
 
-                    {/* Score */}
-                    <div className="w-1/3 text-center font-semibold">
-                        {match.scoreStr ? match.scoreStr : "vs"}
+                    {/* Score / Status */}
+                    <div className="text-center font-semibold my-2 md:my-0 w-full md:w-1/3">
+                      {match.status === "finished" && match.scoreStr ? (
+                        <span className="text-gray-900 font-bold">{match.scoreStr}</span>
+                      ) : match.status === "live" ? (
+                        <span className="text-red-600 font-bold animate-pulse">LIVE</span>
+                      ) : (
+                        <span className="text-blue-500">
+                          {new Date(match.utcTime).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      )}
                     </div>
+
 
                     {/* Away */}
-                    <div className="flex items-center space-x-2">
-                        <img
+                    <div className="flex items-center space-x-2 md:justify-end">
+                      <img
                         src={match.away.logo}
                         alt={match.away.name}
-                        className="w-6 h-6 object-contain"
-                        />
-                        <span>{match.away.name}</span>
+                        className="w-8 h-8 object-contain"
+                      />
+                      <span className="text-sm md:text-base font-medium">
+                        {match.away.name}
+                      </span>
                     </div>
-                    </div>
+                  </div>
                 ))}
-                </div>
+
+              </div>
             ))}
         </div>
-        </div>
+      </div>
+
+      {/* Show login modal */}
+      {showModal && <LoginModal onClose={handleCloseModal} />}
     </>
   );
+
 };
 
 export default Schedule;
