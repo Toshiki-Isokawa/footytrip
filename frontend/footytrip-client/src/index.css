@@ -5,3 +5,12 @@
 body {
   @apply bg-[#a0ddd6]; /* A nice light-blue-green hex */
 }
+
+/* Hide scrollbar but keep scroll functionality */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}

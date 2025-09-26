@@ -51,6 +51,24 @@ function Footy() {
     fetchBaseData();
   }, [userId, token]);
 
+  useEffect(() => {
+    const checkFollowing = async () => {
+      if (!me?.login?.user_id || !userInfo?.id) return;
+
+      try {
+        const res = await fetch(`http://127.0.0.1:5000/api/users/${userId}/followers`);
+        const data = await res.json();
+
+        const amIFollowing = data.some((f) => f.id === me.login.user_id);
+        setIsFollowing(amIFollowing);
+      } catch (err) {
+        console.error("Error checking following status:", err);
+      }
+    };
+
+    checkFollowing();
+  }, [me, userInfo, userId]);
+
   // Fetch tab data every time tab changes
   useEffect(() => {
     const fetchTabData = async () => {

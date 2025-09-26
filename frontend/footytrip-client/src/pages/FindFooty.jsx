@@ -109,12 +109,12 @@ function FindFooty() {
         {searchQuery && (
           <div>
             <h3 className="text-lg font-semibold mb-2">Search Results</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
               {filteredUsers.map((u) => (
                 <div
                   key={u.user_id}
                   onClick={() => navigate(`/footy/${u.user_id}`)}
-                  className="flex flex-col items-center p-3 border rounded shadow-sm"
+                  className="flex-shrink-0 w-28 flex flex-col items-center p-2 cursor-pointer"
                 >
                   <img
                     src={
@@ -123,9 +123,9 @@ function FindFooty() {
                         : "/default-avatar.png"
                     }
                     alt={u.name}
-                    className="w-16 h-16 rounded-full object-cover mb-2"
+                    className="w-16 h-16 rounded-full object-cover mb-1"
                   />
-                  <p className="text-sm font-medium">{u.name}</p>
+                  <p className="text-xs font-medium text-center">{u.name}</p>
                 </div>
               ))}
             </div>
@@ -143,7 +143,7 @@ function FindFooty() {
                 <div
                   key={u.user_id}
                   onClick={() => navigate(`/footy/${u.user_id}`)}
-                  className="flex-shrink-0 w-28 flex flex-col items-center p-2 border rounded"
+                  className="flex-shrink-0 w-28 flex flex-col items-center p-2 cursor-pointer"
                 >
                   <img
                     src={
@@ -172,7 +172,7 @@ function FindFooty() {
                 <div
                   key={u.user_id}
                   onClick={() => navigate(`/footy/${u.user_id}`)}
-                  className="flex-shrink-0 w-28 flex flex-col items-center p-2 border rounded"
+                  className="flex-shrink-0 w-28 flex flex-col items-center p-2 cursor-pointer"
                 >
                   <img
                     src={
