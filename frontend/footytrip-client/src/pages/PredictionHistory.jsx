@@ -5,6 +5,7 @@ import Header from "../components/Header";
 import NaviBar from "../components/NaviBar";
 import LoginModal from "../components/LoginModal";
 import PredictionCard from "../components/PredictionCard";
+import ExplainPredictionRule from "../components/ExplainPredictionRule";  
 
 const PredictionHistory = () => {
   const { token } = useContext(AuthContext);
@@ -19,6 +20,7 @@ const PredictionHistory = () => {
   const [currentWeek, setCurrentWeek] = useState(initialWeek ? Number(initialWeek) : null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [showRule, setShowRule] = useState(false);
 
   useEffect(() => {
     const fetchRealWeek = async () => {
@@ -135,6 +137,22 @@ const PredictionHistory = () => {
             ▶
           </button>
         </div>
+
+        {/* Button to show prediction rules */}
+        <div className="mb-6 text-center">
+          <button
+            onClick={() => setShowRule(true)}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+          >
+            View Prediction Rules
+          </button>
+        </div>
+
+        {/* Modal */}
+        <ExplainPredictionRule
+          isOpen={showRule}
+          onClose={() => setShowRule(false)}
+        />
 
         {/* Prediction Content */}
         {loading ? (
