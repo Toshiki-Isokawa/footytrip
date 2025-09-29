@@ -4,10 +4,12 @@ import { AuthContext } from "../contexts/AuthContext";
 import Header from "../components/Header";
 import NaviBar from "../components/NaviBar"
 import PredictionMatchForm from "../components/PredictionMatchForm";
+import ExplainPredictionRule from "../components/ExplainPredictionRule";  
 
 const PredictionCreate = () => {
   const { token } = useContext(AuthContext);
   const navigate = useNavigate();
+  const [showRule, setShowRule] = useState(false);
 
   // API data
   const [userId, setUserId] = useState(null);
@@ -191,6 +193,22 @@ const PredictionCreate = () => {
         <h1 className="text-2xl font-bold mb-6">
             {isEditing ? "Edit Prediction" : "Create Prediction"}
         </h1>
+
+        {/* Button to show prediction rules */}
+        <div className="mb-6">
+          <button
+            onClick={() => setShowRule(true)}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+          >
+            View Prediction Rules
+          </button>
+        </div>
+
+        {/* Modal */}
+        <ExplainPredictionRule
+          isOpen={showRule}
+          onClose={() => setShowRule(false)}
+        />
 
         {matches.length < 3 && (
             <div className="mb-6 space-y-4">
