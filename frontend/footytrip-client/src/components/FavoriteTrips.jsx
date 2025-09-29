@@ -43,7 +43,7 @@ const FavoriteTrips = () => {
       {favorites.map((trip) => (
         <div
           key={trip.trip_id}
-          className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-lg cursor-pointer"
+          className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-lg cursor-pointer flex flex-col"
           onClick={() => navigate(`/trips/${trip.trip_id}`)}
         >
           {trip.photo && (
@@ -53,9 +53,13 @@ const FavoriteTrips = () => {
               className="w-full h-40 object-cover"
             />
           )}
-          <div className="p-4">
-            <h3 className="text-lg font-bold text-gray-800">{trip.title}</h3>
-            <p className="text-sm text-gray-600">{trip.stadium}</p>
+          <div className="p-4 flex-1 flex flex-col justify-between">
+            <h3 className="text-lg font-bold text-gray-800 truncate">
+              {trip.title}
+            </h3>
+            <p className="text-sm text-gray-600 truncate">
+              {trip.stadium}
+            </p>
             <p className="text-xs text-gray-500">
               {new Date(trip.date).toLocaleDateString()}
             </p>
