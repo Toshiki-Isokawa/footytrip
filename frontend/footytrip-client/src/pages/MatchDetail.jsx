@@ -103,7 +103,7 @@ function MatchDetail() {
         </div>
 
         {/* Action buttons */}
-        <div className="flex justify-center gap-4">
+        <div className="flex flex-col sm:flex-row justify-center gap-4">
           {isOwner && (
             <button
               onClick={() => navigate(`/trips/${tripId}/match/edit`)}

@@ -157,16 +157,16 @@ const Leaderboard = () => {
         )}
 
         {/* Navigation Buttons */}
-        <div className="mt-8 flex justify-center space-x-6">
+        <div className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
           <button
             onClick={() => navigate("/prediction")}
-            className="px-6 py-3 bg-blue-600 text-white rounded-xl shadow hover:bg-blue-700 transition"
+            className="px-6 py-3 bg-blue-600 text-white rounded-xl shadow hover:bg-blue-700 transition w-full sm:w-auto"
           >
             Go to Prediction Page
           </button>
           <button
             onClick={() => navigate("/")}
-            className="px-6 py-3 bg-gray-600 text-white rounded-xl shadow hover:bg-gray-700 transition"
+            className="px-6 py-3 bg-gray-600 text-white rounded-xl shadow hover:bg-gray-700 transition w-full sm:w-auto"
           >
             Back to Home
           </button>

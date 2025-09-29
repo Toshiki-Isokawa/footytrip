@@ -22,6 +22,7 @@ function Footy() {
   const [activeTab, setActiveTab] = useState("trips");
   const [me, setMe] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showTabs, setShowTabs] = useState(false);
 
   // Fetch profile info & current user once
   useEffect(() => {
@@ -149,142 +150,204 @@ function Footy() {
     <>
       <Header />
       <NaviBar />
-      <div className="max-w-4xl mx-auto p-6">
-      {userInfo && (
-        <>
-          {/* User name */}
-          <h1 className="text-5xl font-bold text-center mb-6">{userInfo.name}</h1>
+      <div className="max-w-4xl mx-auto p-4 sm:p-6">
+        {userInfo && (
+          <>
+            {/* User name */}
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-4 sm:mb-6">
+              {userInfo.name}
+            </h1>
 
-          {/* Profile Section */}
-            <div className="relative mb-8">
-                <div className="flex justify-center items-center gap-6">
-                    <img
-                    src={
-                        userInfo.profile
-                        ? `http://127.0.0.1:5000/static/uploads/profiles/${userInfo.profile}`
-                        : "/default-avatar.png"
-                    }
-                    alt="Profile"
-                    className="w-48 h-48 rounded-full object-cover border"
-                    />
+            {/* Profile Section */}
+            <div className="relative mb-6 sm:mb-8">
+              <div className="flex flex-col md:flex-row items-center md:items-start gap-4 sm:gap-6">
+                <img
+                  src={
+                    userInfo.profile
+                      ? `http://127.0.0.1:5000/static/uploads/profiles/${userInfo.profile}`
+                      : "/default-avatar.png"
+                  }
+                  alt="Profile"
+                  className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 rounded-full object-cover border"
+                />
 
-                    <div className="flex flex-col justify-center text-center md:text-left">
-                    <p className="text-2xl"><strong>Fav Team:</strong> {userInfo.fav_team}</p>
-                    <p className="text-2xl"><strong>Fav Player:</strong> {userInfo.fav_player}</p>
-                    <p className="text-2xl"><strong>Date of Birth:</strong> {formatDate(userInfo.date_of_birth)}</p>
-                    <p className="text-2xl"><strong>Point:</strong> {userInfo.point}</p>
-                    </div>
+                <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-1 sm:space-y-2">
+                  <p className="text-base sm:text-lg md:text-2xl">
+                    <strong>Fav Team:</strong> {userInfo.fav_team}
+                  </p>
+                  <p className="text-base sm:text-lg md:text-2xl">
+                    <strong>Fav Player:</strong> {userInfo.fav_player}
+                  </p>
+                  <p className="text-base sm:text-lg md:text-2xl">
+                    <strong>Date of Birth:</strong> {formatDate(userInfo.date_of_birth)}
+                  </p>
+                  <p className="text-base sm:text-lg md:text-2xl">
+                    <strong>Point:</strong> {userInfo.point}
+                  </p>
                 </div>
+              </div>
 
-                {/* Follow Button (top-right corner) */}
-                {me?.login?.user_id !== userInfo?.id && (
-                    <button
-                        onClick={toggleFollow}
-                        className={`absolute top-0 right-0 px-4 py-2 rounded-lg shadow ${
-                        isFollowing ? "bg-red-500" : "bg-blue-500"
-                        } text-white`}
-                    >
-                        {isFollowing ? "Unfollow" : "Follow"}
-                    </button>
-                )}
+              {/* Follow Button */}
+              {me?.login?.user_id !== userInfo?.id && (
+                <button
+                  onClick={toggleFollow}
+                  className={`absolute top-0 right-0 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg shadow text-sm sm:text-base ${
+                    isFollowing ? "bg-red-500" : "bg-blue-500"
+                  } text-white`}
+                >
+                  {isFollowing ? "Unfollow" : "Follow"}
+                </button>
+              )}
             </div>
 
             {/* Tabs */}
-            <div className="border-b mb-6 flex justify-center gap-8">
-            {["following", "followers", "trips", "favorites"].map((tab) => (
+            <div className="border-b mb-6">
+              {/* Mobile View */}
+              <div className="sm:hidden flex items-center gap-2">
+                {/* Burger Button */}
                 <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`pb-3 px-4 text-lg font-medium ${
-                    activeTab === tab
-                    ? "border-b-2 border-blue-500 text-blue-600"
-                    : "text-gray-500"
-                }`}
+                  onClick={() => setShowTabs((prev) => !prev)}
+                  className="px-2 py-1 text-gray-600 hover:text-gray-900"
                 >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  ☰
                 </button>
-            ))}
+
+                {/* Active Tab */}
+                <span className="text-lg font-medium text-blue-600">
+                  {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+                </span>
+
+                {/* Dropdown (only when burger clicked) */}
+                {showTabs && (
+                  <div className="absolute mt-10 bg-white shadow-lg rounded-lg p-2 z-20">
+                    {["following", "followers", "trips", "favorites"].map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => {
+                          setActiveTab(tab);
+                          setShowTabs(false); // close after selection
+                        }}
+                        className={`block w-full text-left px-4 py-2 rounded ${
+                          activeTab === tab
+                            ? "bg-blue-100 text-blue-600"
+                            : "text-gray-700 hover:bg-gray-100"
+                        }`}
+                      >
+                        {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Desktop/Tablet View */}
+              <div className="hidden sm:flex justify-center gap-8">
+                {["following", "followers", "trips", "favorites"].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`pb-3 px-4 text-lg font-medium ${
+                      activeTab === tab
+                        ? "border-b-2 border-blue-500 text-blue-600"
+                        : "text-gray-500"
+                    }`}
+                  >
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  </button>
+                ))}
+              </div>
             </div>
 
-          {/* Tab Content */}
-          <div>
-            {activeTab === "trips" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {trips.map((trip) => (
-                  <div
-                    key={trip.trip_id}
-                    onClick={() => navigate(`/trips/${trip.trip_id}`)}
-                    className="cursor-pointer"
-                >
-                    <TripCard {...trip} />
+
+            {/* Tab Content */}
+            <div>
+              {activeTab === "trips" && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {trips.map((trip) => (
+                    <div
+                      key={trip.trip_id}
+                      onClick={() => navigate(`/trips/${trip.trip_id}`)}
+                      className="cursor-pointer"
+                    >
+                      <TripCard {...trip} />
+                    </div>
+                  ))}
                 </div>
-                ))}
-              </div>
-            )}
-            {activeTab === "favorites" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {favorites.map((trip) => (
-                  <div
-                    key={trip.trip_id}
-                    onClick={() => navigate(`/trips/${trip.trip_id}`)}
-                    className="cursor-pointer"
-                >
-                    <TripCard {...trip} />
-              </div>
-                ))}
-              </div>
-            )}
-            {activeTab === "followers" && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {followers.map((f) => (
-                  <div key={f.user_id} className="text-center" onClick={() => navigate(`/footy/${f.id}`)}>
-                    <img
-                      src={
-                        f.profile
-                          ? `http://127.0.0.1:5000/static/uploads/profiles/${f.profile}`
-                          : "/default-avatar.png"
-                      }
-                      alt="Follower"
-                      className="w-20 h-20 mx-auto rounded-full object-cover"
-                    />
-                    <p className="mt-2">{f.name}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-            {activeTab === "following" && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {following.map((f) => (
-                  <div key={f.user_id} className="text-center" onClick={() => navigate(`/footy/${f.id}`)}>
-                    <img
-                      src={
-                        f.profile
-                          ? `http://127.0.0.1:5000/static/uploads/profiles/${f.profile}`
-                          : "/default-avatar.png"
-                      }
-                      alt="Following"
-                      className="w-20 h-20 mx-auto rounded-full object-cover"
-                    />
-                    <p className="mt-2">{f.name}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          {/* Back Button */}
-            <div className="mt-6 flex justify-center">
-                <button
-                onClick={() => navigate(from)}
-                className="px-4 py-2 bg-gray-200 rounded-lg shadow hover:bg-gray-300 transition"
-                >
-                ← Back
-                </button>
+              )}
+              {activeTab === "favorites" && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {favorites.map((trip) => (
+                    <div
+                      key={trip.trip_id}
+                      onClick={() => navigate(`/trips/${trip.trip_id}`)}
+                      className="cursor-pointer"
+                    >
+                      <TripCard {...trip} />
+                    </div>
+                  ))}
+                </div>
+              )}
+              {activeTab === "followers" && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {followers.map((f) => (
+                    <div
+                      key={f.user_id}
+                      className="text-center cursor-pointer"
+                      onClick={() => navigate(`/footy/${f.id}`)}
+                    >
+                      <img
+                        src={
+                          f.profile
+                            ? `http://127.0.0.1:5000/static/uploads/profiles/${f.profile}`
+                            : "/default-avatar.png"
+                        }
+                        alt="Follower"
+                        className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full object-cover"
+                      />
+                      <p className="mt-1 sm:mt-2 text-sm sm:text-base">{f.name}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {activeTab === "following" && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {following.map((f) => (
+                    <div
+                      key={f.user_id}
+                      className="text-center cursor-pointer"
+                      onClick={() => navigate(`/footy/${f.id}`)}
+                    >
+                      <img
+                        src={
+                          f.profile
+                            ? `http://127.0.0.1:5000/static/uploads/profiles/${f.profile}`
+                            : "/default-avatar.png"
+                        }
+                        alt="Following"
+                        className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full object-cover"
+                      />
+                      <p className="mt-1 sm:mt-2 text-sm sm:text-base">{f.name}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-        </>
-      )}
-    </div>
+
+            {/* Back Button */}
+            <div className="mt-6 flex justify-center">
+              <button
+                onClick={() => navigate(from)}
+                className="px-4 py-2 bg-gray-200 rounded-lg shadow hover:bg-gray-300 transition text-sm sm:text-base"
+              >
+                ← Back
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </>
   );
+
 }
 
 export default Footy;

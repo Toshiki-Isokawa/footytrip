@@ -187,7 +187,7 @@ function TripDetail() {
         </div>
 
         {/* Action buttons */}
-        <div className="flex justify-center gap-4">
+        <div className="flex flex-col sm:flex-row justify-center gap-4">
           {isOwner && (
             <button
               onClick={() => navigate(`/trips/${id}/edit`)}
@@ -198,48 +198,45 @@ function TripDetail() {
           )}
           {isOwner && (
             <button
-                onClick={handleDelete}
-                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg"
+              onClick={handleDelete}
+              className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg"
             >
-                Delete
+              Delete
             </button>
-            )}
+          )}
           <button
             onClick={() => navigate("/trips")}
             className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg"
           >
             Back to Trips
           </button>
-          <div className="flex justify-center gap-4">
-            {isOwner ? (
-              match ? (
-                <button
-                  onClick={() => navigate(`/trips/${id}/match`)}
-                  className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg"
-                >
-                  Check Match
-                </button>
-              ) : (
-                <button
-                  onClick={() => navigate(`/trips/${id}/match/new`)}
-                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
-                >
-                  Add Match
-                </button>
-              )
+
+          {isOwner ? (
+            match ? (
+              <button
+                onClick={() => navigate(`/trips/${id}/match`)}
+                className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg"
+              >
+                Check Match
+              </button>
             ) : (
-              match && (
-                <button
-                  onClick={() => navigate(`/trips/${id}/match`)}
-                  className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg"
-                >
-                  Check Match
-                </button>
-              )
-            )}
-          </div>
-
-
+              <button
+                onClick={() => navigate(`/trips/${id}/match/new`)}
+                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
+              >
+                Add Match
+              </button>
+            )
+          ) : (
+            match && (
+              <button
+                onClick={() => navigate(`/trips/${id}/match`)}
+                className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg"
+              >
+                Check Match
+              </button>
+            )
+          )}
         </div>
       </div>
     </>
