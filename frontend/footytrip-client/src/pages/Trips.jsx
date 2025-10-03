@@ -4,12 +4,14 @@ import { AuthContext } from "../contexts/AuthContext";
 import Header from "../components/Header";
 import NaviBar from "../components/NaviBar";
 import FavoriteTrips from "../components/FavoriteTrips";
+import TripCard from "../components/TripCard";
 import LoginModal from "../components/LoginModal";
 
 const Trip = () => {
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
   const [user, setUser] = useState(null);
+  const [userTrips, setUserTrips] = useState([]);
   const { token, loading } = useContext(AuthContext);
   useEffect(() => {
     fetch("http://127.0.0.1:5000/api/me", {
@@ -19,6 +21,14 @@ const Trip = () => {
       .then((data) => {
         if (data.user && data.login) {
           setUser(data);
+
+          // Fetch logged-in user trips
+          fetch(`http://127.0.0.1:5000/api/trips/footy/${data.login.user_id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+            .then((res) => res.json())
+            .then((trips) => setUserTrips(trips))
+            .catch((err) => console.error("Error fetching user trips:", err));
         } else {
           setShowModal(true);
           throw new Error();
@@ -63,6 +73,26 @@ const Trip = () => {
         {/* Favorite trips */}
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Your Favorite Trips</h2>
         <FavoriteTrips />
+
+        {/* User's own trips */}
+        <div className="mt-12"> {/* space between sections */}
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Your Trips</h2>
+          {userTrips.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {userTrips.map((trip) => (
+                <div
+                  key={trip.trip_id}
+                  onClick={() => navigate(`/trips/${trip.trip_id}`)}
+                  className="cursor-pointer transition-transform hover:scale-105"
+                >
+                  <TripCard {...trip} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-600">You haven’t created any trips yet.</p>
+          )}
+        </div>
       </main>
     </div>
   );

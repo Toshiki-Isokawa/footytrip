@@ -216,3 +216,32 @@ def check_favorite(trip_id):
     favorite = Favorite.query.filter_by(user_id=user.user_id, trip_id=trip_id).first()
 
     return jsonify({"is_favorite": bool(favorite)}), 200
+
+# -----------------------------
+# GET /api/trips/footy/<user_id>
+# -----------------------------
+@trip_bp.route("trips/footy/<int:user_id>", methods=["GET"])
+@jwt_required()
+def get_user_trips(user_id):
+    user = get_current_user()
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+    user_id = user.user_id
+    trips = Trip.query.filter_by(user_id=user_id).order_by(Trip.created_at.desc()).all()
+
+    return jsonify([
+        {
+            "trip_id": t.trip_id,
+            "title": t.title,
+            "photo": t.photo,
+            "country": t.country,
+            "city": t.city,
+            "stadium": t.stadium,
+            "date": t.date.strftime("%Y-%m-%d"),
+            "comments": t.comments,
+            "user_id": t.user_id,
+            "created_at": t.created_at.isoformat(),
+            "edited_at": t.edited_at.isoformat(),
+        }
+        for t in trips
+    ]), 200

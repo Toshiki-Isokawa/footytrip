@@ -114,7 +114,7 @@ function FindFooty() {
                 <div
                   key={u.user_id}
                   onClick={() => navigate(`/footy/${u.user_id}`)}
-                  className="flex-shrink-0 w-28 flex flex-col items-center p-2 cursor-pointer"
+                  className="flex-shrink-0 w-28 flex flex-col items-center p-2 cursor-pointer transform transition-transform hover:scale-105"
                 >
                   <img
                     src={
@@ -143,7 +143,7 @@ function FindFooty() {
                 <div
                   key={u.user_id}
                   onClick={() => navigate(`/footy/${u.user_id}`)}
-                  className="flex-shrink-0 w-28 flex flex-col items-center p-2 cursor-pointer"
+                  className="flex-shrink-0 w-28 flex flex-col items-center p-2 cursor-pointer transform transition-transform hover:scale-105"
                 >
                   <img
                     src={
@@ -172,7 +172,7 @@ function FindFooty() {
                 <div
                   key={u.user_id}
                   onClick={() => navigate(`/footy/${u.user_id}`)}
-                  className="flex-shrink-0 w-28 flex flex-col items-center p-2 cursor-pointer"
+                  className="flex-shrink-0 w-28 flex flex-col items-center p-2 cursor-pointer transform transition-transform hover:scale-105"
                 >
                   <img
                     src={
