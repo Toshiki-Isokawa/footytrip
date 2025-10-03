@@ -43,7 +43,7 @@ const FavoriteTrips = () => {
       {favorites.map((trip) => (
         <div
           key={trip.trip_id}
-          className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-lg cursor-pointer flex flex-col"
+          className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-lg cursor-pointer flex flex-col transform transition-transform hover:scale-105"
           onClick={() => navigate(`/trips/${trip.trip_id}`)}
         >
           {trip.photo && (

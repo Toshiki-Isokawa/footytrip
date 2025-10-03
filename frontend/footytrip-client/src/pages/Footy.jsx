@@ -267,7 +267,7 @@ function Footy() {
                     <div
                       key={trip.trip_id}
                       onClick={() => navigate(`/trips/${trip.trip_id}`)}
-                      className="cursor-pointer"
+                      className="cursor-pointer transform transition-transform hover:scale-105"
                     >
                       <TripCard {...trip} />
                     </div>
@@ -280,7 +280,7 @@ function Footy() {
                     <div
                       key={trip.trip_id}
                       onClick={() => navigate(`/trips/${trip.trip_id}`)}
-                      className="cursor-pointer"
+                      className="cursor-pointer transform transition-transform hover:scale-105"
                     >
                       <TripCard {...trip} />
                     </div>
@@ -292,7 +292,7 @@ function Footy() {
                   {followers.map((f) => (
                     <div
                       key={f.user_id}
-                      className="text-center cursor-pointer"
+                      className="text-center cursor-pointer transform transition-transform hover:scale-105"
                       onClick={() => navigate(`/footy/${f.id}`)}
                     >
                       <img
@@ -314,7 +314,7 @@ function Footy() {
                   {following.map((f) => (
                     <div
                       key={f.user_id}
-                      className="text-center cursor-pointer"
+                      className="text-center cursor-pointer transform transition-transform hover:scale-105"
                       onClick={() => navigate(`/footy/${f.id}`)}
                     >
                       <img

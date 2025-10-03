@@ -129,19 +129,22 @@ const Home = () => {
                 <div className="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                     {trips.length > 0 ? (
                         trips.map((trip) => (
-                        <div
-                            key={trip.trip_id}
-                            className="cursor-pointer"
-                            onClick={() => navigate(`/trips/${trip.trip_id}`)}
-                        >
+                            <div
+                                key={trip.trip_id}
+                                className="cursor-pointer transform transition-transform hover:scale-105"
+                                onClick={() => navigate(`/trips/${trip.trip_id}`)}
+                            >
                             <TripCard {...trip} />
-                        </div>
+                            </div>
                         ))
-                    ) : (
-                        <p className="text-center col-span-full">No trips from followed users yet.</p>
+                        ) : (
+                        <p className="text-center col-span-full">
+                            No trips from followed users yet.
+                        </p>
                     )}
                 </div>
             </section>
+
         </div>
     );
 };
