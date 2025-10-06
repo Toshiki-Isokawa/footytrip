@@ -10,7 +10,7 @@ from flask_jwt_extended.exceptions import NoAuthorizationError
 auth_bp = Blueprint("auth", __name__, url_prefix="/api")
 
 # -----------------------------
-# POST /api/auth/register
+# POST /api/register
 # -----------------------------
 @auth_bp.route("/register", methods=["POST"])
 def register():
