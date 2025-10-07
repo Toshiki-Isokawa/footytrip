@@ -1,23 +1,28 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { AuthContext } from "../contexts/AuthContext";
+import { GoogleLogin } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
 import Header from "../components/Header";
 import NaviBar from "../components/NaviBar";
 
 
 function Register() {
+  const { token } = useContext(AuthContext);
+  const { login } = useContext(AuthContext);
   const location = useLocation();
-  const login = location.state?.login || {};
-  const [email, setEmail] = useState(login.email || "");
+  const loginInfo = location.state?.login || {};
+  const [email, setEmail] = useState(loginInfo.email || "");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState(""); // New state
   const navigate = useNavigate();
   const isEditMode = location.state?.from === "/settings";
 
   useEffect(() => {
-    if (login?.email) {
-      setEmail(login.email);
+    if (loginInfo?.email) {
+      setEmail(loginInfo.email);
     }
-  }, [login]);
+  }, [loginInfo]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,18 +32,9 @@ function Register() {
       return;
     }
 
-    console.log("Register page loaded");
-    console.log("location.state:", location.state);
-    console.log("login:", login);
-    console.log("isEditMode:", isEditMode);
-
     const endpoint = isEditMode
     ? "http://127.0.0.1:5000/api/update-login"
     : "http://127.0.0.1:5000/api/register";
-
-    console.log("Selected endpoint:", endpoint);
-
-    const token = localStorage.getItem("access_token");
 
     const res = await fetch(endpoint, {
       method: "POST",
@@ -97,6 +93,51 @@ function Register() {
             Register
           </button>
         </form>
+
+        {/* Divider */}
+        <div className="flex items-center justify-center mb-4">
+          <hr className="w-1/3 border-gray-300" />
+          <span className="px-2 text-gray-500">or</span>
+          <hr className="w-1/3 border-gray-300" />
+        </div>
+
+        <GoogleLogin
+          onSuccess={async (credentialResponse) => {
+            const id_token = credentialResponse.credential;
+
+            try {
+              const res = await fetch("http://127.0.0.1:5000/api/auth/google", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                  id_token: id_token,
+                  mode: "register"
+                }),
+              });
+
+              const data = await res.json();
+
+              if (res.status === 409 && data.existing_user) {
+                alert("You already have an account. Please log in instead.");
+                navigate("/login");
+                return;
+              }
+              if (res.ok) {
+                login(data.access_token);
+                navigate("/account");
+              } else {
+                alert(data.msg || "Google registration failed");
+              }
+            } catch (err) {
+              console.error("Google login error:", err);
+              alert("Something went wrong with Google login");
+            }
+          }}
+          onError={() => {
+            console.log("Google Login Failed");
+            alert("Google Login Failed");
+          }}
+        />
       </div>
     </>
   );
