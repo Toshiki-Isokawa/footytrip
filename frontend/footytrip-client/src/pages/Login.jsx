@@ -1,5 +1,6 @@
 import { useState, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
 import { AuthContext } from "../contexts/AuthContext";
 import Header from "../components/Header";
 import NaviBar from "../components/NaviBar";
@@ -33,6 +34,40 @@ function Login() {
         }
     };
 
+    const handleGoogleLoginError = () => {
+      alert("Google Sign-In failed. Please try again.");
+    };
+
+    const handleGoogleLoginSuccess = async (credentialResponse) => {
+      try {
+        const res = await fetch("http://127.0.0.1:5000/api/auth/google", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            id_token: credentialResponse.credential, 
+            mode: "login"
+          }),
+        });
+
+        const data = await res.json();
+
+        if (res.status === 404 && data.not_registered) {
+          alert("No account found for this Google user. Please register first.");
+          navigate("/register");
+          return;
+        }
+
+        if (res.ok) {
+          login(data.access_token); 
+          navigate("/"); 
+        } else {
+          alert(data.msg || "Google Sign-In failed");
+        }
+      } catch (err) {
+        console.error("Google login error:", err);
+      }
+    };
+
   return (
     <>
       <Header />
@@ -58,6 +93,21 @@ function Login() {
             Log In
           </button>
         </form>
+
+        {/* Divider */}
+        <div className="flex items-center justify-center mb-4">
+          <hr className="w-1/3 border-gray-300" />
+          <span className="px-2 text-gray-500">or</span>
+          <hr className="w-1/3 border-gray-300" />
+        </div>
+
+        {/* Google Login */}
+        <div className="flex justify-center">
+          <GoogleLogin
+            onSuccess={handleGoogleLoginSuccess}
+            onError={handleGoogleLoginError}
+          />
+        </div>
       </div>
     </>
   );
