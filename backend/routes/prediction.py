@@ -373,3 +373,59 @@ def last_prediction():
 
     week = get_week_number(datetime.utcnow()) - 1
     return fetch_prediction(user_id=user_id, week=week)
+
+
+def fetch_all_predictions_by_user(user_id):
+    try:
+        predictions = Prediction.query.filter_by(user_id=user_id).order_by(Prediction.week.desc()).all()
+
+        if not predictions:
+            return []  
+
+        all_predictions_out = []
+
+        for prediction in predictions:
+            matches = PredictionMatch.query.filter_by(prediction_id=prediction.prediction_id).all()
+            matches_out = []
+
+            for m in matches:
+                item = {
+                    "match_id": m.match_id,
+                    "home_team": {"id": m.home_team_id, "name": m.home_team},
+                    "away_team": {"id": m.away_team_id, "name": m.away_team},
+                    "result_prediction": m.result_prediction,
+                    "score_home_prediction": m.score_home_prediction,
+                    "score_away_prediction": m.score_away_prediction,
+                    "total_goals_prediction": m.total_goals_prediction,
+                    "red_card_prediction": m.red_card_prediction,
+                }
+
+                if prediction.status == "scored":
+                    item.update({
+                        "obtained_points": m.obtained_points,
+                        "result_actual": m.result_actual,
+                        "score_home_actual": m.score_home_actual,
+                        "score_away_actual": m.score_away_actual,
+                        "total_goals_actual": m.total_goals_actual,
+                        "red_card_actual": m.red_card_actual,
+                    })
+
+                matches_out.append(item)
+
+            all_predictions_out.append({
+                "week": prediction.week,
+                "status": prediction.status,
+                "obtained_points": getattr(prediction, "obtained_points", None),
+                "matches": matches_out
+            })
+
+        return all_predictions_out
+
+    except Exception as e:
+        print(f"Error fetching predictions for user {user_id}: {e}")
+        return []
+
+@prediction_bp.route("/user_history/<int:user_id>", methods=["GET"])
+def user_history(user_id):
+    data = fetch_all_predictions_by_user(user_id)
+    return jsonify(data), 200
