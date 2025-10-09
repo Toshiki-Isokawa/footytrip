@@ -24,19 +24,15 @@ def get_users():
     ]
     return jsonify(data), 200
 
-# -----------------------------
-# GET /api/users/<id>
-# -----------------------------
-@footy_bp.route("/users/<int:user_id>", methods=["GET"])
-def get_user_detail(user_id):
+def fetch_user_detail(user_id):
     user = User.query.get(user_id)
     if not user:
-        return jsonify({"msg": "User not found"}), 404
+        return None
 
     followers_count = Follow.query.filter_by(followed_id=user_id).count()
     following_count = Follow.query.filter_by(follower_id=user_id).count()
 
-    data = {
+    return {
         "id": user.user_id,
         "name": user.name,
         "profile": user.profile,
@@ -47,6 +43,16 @@ def get_user_detail(user_id):
         "followers_count": followers_count,
         "following_count": following_count,
     }
+
+
+# -----------------------------
+# GET /api/users/<id>
+# -----------------------------
+@footy_bp.route("/users/<int:user_id>", methods=["GET"])
+def get_user_detail(user_id):
+    data = fetch_user_detail(user_id)
+    if not data:
+        return jsonify({"msg": "User not found"}), 404
     return jsonify(data), 200
 
 

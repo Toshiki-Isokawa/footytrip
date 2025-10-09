@@ -15,6 +15,7 @@ from routes.prediction import prediction_bp
 from routes.predictionMatch import predictionMatch_bp
 from routes.upcomigMatch import upcomingMatch_bp
 from routes.google_auth import google_bp
+from routes.ai_chat import ai_bp
 
 def create_app():
     app = Flask(__name__)
@@ -43,6 +44,7 @@ def create_app():
     app.register_blueprint(predictionMatch_bp)
     app.register_blueprint(upcomingMatch_bp)
     app.register_blueprint(google_bp)
+    app.register_blueprint(ai_bp)
 
     return app
 
