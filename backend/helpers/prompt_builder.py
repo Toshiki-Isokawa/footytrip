@@ -61,7 +61,6 @@ def build_prediction_prompt(user_id, user_message):
     - Explain your reasoning briefly.
     - Keep your tone friendly and insightful.
     """
-    print("Generated Prompt:\n", prompt)  # For debugging
     return prompt
 
 def build_analyzer_prompt(user_id):
