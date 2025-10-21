@@ -30,8 +30,8 @@ const PredictionCreate = () => {
     const fetchData = async () => {
       try {
         const [matchesRes, leaguesRes] = await Promise.all([
-          fetch("http://127.0.0.1:5000/api/predictions/available-matches"),
-          fetch("http://127.0.0.1:5000/api/leagues"),
+          fetch(`${process.env.REACT_APP_API_BASE_URL}/api/predictions/available-matches`),
+          fetch(`${process.env.REACT_APP_API_BASE_URL}/api/leagues`),
         ]);
         const matchesData = await matchesRes.json();
         const leaguesData = await leaguesRes.json();
@@ -50,7 +50,7 @@ const PredictionCreate = () => {
     const fetchUserAndPrediction = async () => {
       if (!token) return;
       try {
-        const res = await fetch("http://127.0.0.1:5000/api/check", {
+        const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/check`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to fetch user_id");
@@ -59,7 +59,7 @@ const PredictionCreate = () => {
 
         // Fetch existing prediction
         const predRes = await fetch(
-          `http://127.0.0.1:5000/api/predictions/fetch?user_id=${data.user_id}`
+          `${process.env.REACT_APP_API_BASE_URL}/api/predictions/fetch?user_id=${data.user_id}`
         );
         if (predRes.ok) {
           const predData = await predRes.json();
@@ -163,8 +163,8 @@ const PredictionCreate = () => {
         .filter(Boolean);
 
         const url = isEditing
-        ? "http://127.0.0.1:5000/api/predictions/update"
-        : "http://127.0.0.1:5000/api/predictions/create";
+        ? `${process.env.REACT_APP_API_BASE_URL}/api/predictions/update`
+        : `${process.env.REACT_APP_API_BASE_URL}/api/predictions/create`;
 
         const res = await fetch(url, {
             method: isEditing? "PUT" : "POST", // usually updates use POST with same payload

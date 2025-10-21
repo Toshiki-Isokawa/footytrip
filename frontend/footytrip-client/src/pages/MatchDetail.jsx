@@ -14,7 +14,7 @@ function MatchDetail() {
   // Fetch logged-in user
   useEffect(() => {
     if (token) {
-      fetch("http://127.0.0.1:5000/api/me", {
+      fetch(`${process.env.REACT_APP_API_BASE_URL}/api/me`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => res.json())
@@ -25,7 +25,7 @@ function MatchDetail() {
 
   // Fetch match
   useEffect(() => {
-    fetch(`http://127.0.0.1:5000/api/trips/${tripId}/match`)
+    fetch(`${process.env.REACT_APP_API_BASE_URL}/api/trips/${tripId}/match`)
       .then((res) => res.json())
       .then((data) => setMatch(data))
       .catch((err) => console.error("Error fetching match:", err));
@@ -38,7 +38,7 @@ function MatchDetail() {
 
     try {
       const res = await fetch(
-        `http://127.0.0.1:5000/api/trips/${tripId}/match`,
+        `${process.env.REACT_APP_API_BASE_URL}/api/trips/${tripId}/match`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
@@ -72,7 +72,7 @@ function MatchDetail() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {match.photo && (
             <img
-              src={`http://127.0.0.1:5000/static/uploads/match/${match.photo}`}
+              src={`${process.env.REACT_APP_API_BASE_URL}/static/uploads/match/${match.photo}`}
               alt={match.title}
               className="w-full h-64 object-cover rounded-lg shadow-md"
             />

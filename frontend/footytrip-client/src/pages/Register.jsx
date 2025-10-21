@@ -2,7 +2,6 @@ import { useState, useEffect, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../contexts/AuthContext";
 import { GoogleLogin } from "@react-oauth/google";
-import { jwtDecode } from "jwt-decode";
 import Header from "../components/Header";
 import NaviBar from "../components/NaviBar";
 
@@ -33,8 +32,8 @@ function Register() {
     }
 
     const endpoint = isEditMode
-    ? "http://127.0.0.1:5000/api/update-login"
-    : "http://127.0.0.1:5000/api/register";
+    ? `${process.env.REACT_APP_API_BASE_URL}/api/update-login`
+    : `${process.env.REACT_APP_API_BASE_URL}/api/register`;
 
     const res = await fetch(endpoint, {
       method: "POST",
@@ -106,7 +105,7 @@ function Register() {
             const id_token = credentialResponse.credential;
 
             try {
-              const res = await fetch("http://127.0.0.1:5000/api/auth/google", {
+              const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/auth/google`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 

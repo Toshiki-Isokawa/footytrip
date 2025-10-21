@@ -20,8 +20,8 @@ function FindFooty() {
     const fetchData = async () => {
         try {
         const [usersRes, meRes] = await Promise.all([
-            fetch("http://127.0.0.1:5000/api/users"),
-            fetch("http://127.0.0.1:5000/api/me", {
+            fetch(`${process.env.REACT_APP_API_BASE_URL}/api/users`),
+            fetch(`${process.env.REACT_APP_API_BASE_URL}/api/me`, {
             headers: { Authorization: `Bearer ${token}` },
             }),
         ]);
@@ -119,7 +119,7 @@ function FindFooty() {
                   <img
                     src={
                       u.profile
-                        ? `http://127.0.0.1:5000/static/uploads/profiles/${u.profile}`
+                        ? `${process.env.REACT_APP_API_BASE_URL}/static/uploads/profiles/${u.profile}`
                         : "/default-avatar.png"
                     }
                     alt={u.name}
@@ -148,7 +148,7 @@ function FindFooty() {
                   <img
                     src={
                       u.profile
-                        ? `http://127.0.0.1:5000/static/uploads/profiles/${u.profile}`
+                        ? `${process.env.REACT_APP_API_BASE_URL}/static/uploads/profiles/${u.profile}`
                         : "/default-avatar.png"
                     }
                     alt={u.name}
@@ -177,7 +177,7 @@ function FindFooty() {
                   <img
                     src={
                       u.profile
-                        ? `http://127.0.0.1:5000/static/uploads/profiles/${u.profile}`
+                        ? `${process.env.REACT_APP_API_BASE_URL}/static/uploads/profiles/${u.profile}`
                         : "/default-avatar.png"
                     }
                     alt={u.name}

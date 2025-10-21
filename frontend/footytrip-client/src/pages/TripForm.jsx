@@ -29,7 +29,7 @@ function TripForm() {
   // Fetch existing trip if editing
   useEffect(() => {
     if (isEditing) {
-      fetch(`http://127.0.0.1:5000/api/trips/${id}`)
+      fetch(`${process.env.REACT_APP_API_BASE_URL}/api/trips/${id}`)
         .then((res) => res.json())
         .then((data) => {
         setFormData({
@@ -43,7 +43,7 @@ function TripForm() {
         });
 
         if (data.photo) {
-          setPhotoPreview(`http://127.0.0.1:5000/static/uploads/trips/${data.photo}`);
+          setPhotoPreview(`${process.env.REACT_APP_API_BASE_URL}/static/uploads/trips/${data.photo}`);
         }
       })
         .catch((err) => console.error("Error fetching trip for edit:", err));
@@ -53,7 +53,7 @@ function TripForm() {
 
   // Fetch leagues
   useEffect(() => {
-    fetch("http://127.0.0.1:5000/api/leagues")
+    fetch(`${process.env.REACT_APP_API_BASE_URL}/api/leagues`)
       .then(res => res.json())
       .then(data => setAllLeagues(data))
       .catch(err => console.error("Error fetching leagues:", err));
@@ -69,7 +69,7 @@ function TripForm() {
   // Fetch teams when league changes
   useEffect(() => {
     if (!formData.league) return;
-    fetch(`http://127.0.0.1:5000/api/teams?league_id=${formData.league}`)
+    fetch(`${process.env.REACT_APP_API_BASE_URL}/api/teams?league_id=${formData.league}`)
       .then(res => res.json())
       .then(data => setTeams(data))
       .catch(err => console.error("Error fetching teams:", err));
@@ -78,7 +78,7 @@ function TripForm() {
   // Fetch stadium when team changes
   useEffect(() => {
     if (!formData.team) return;
-    fetch(`http://127.0.0.1:5000/api/stadium?team_id=${formData.team}`)
+    fetch(`${process.env.REACT_APP_API_BASE_URL}/api/stadium?team_id=${formData.team}`)
       .then(res => res.json())
       .then(data =>
         setFormData(prev => ({
@@ -122,8 +122,8 @@ function TripForm() {
     try {
       const res = await fetch(
         isEditing
-          ? `http://127.0.0.1:5000/api/trips/${id}`
-          : "http://127.0.0.1:5000/api/trips",
+          ? `${process.env.REACT_APP_API_BASE_URL}/api/trips/${id}`
+          : `${process.env.REACT_APP_API_BASE_URL}/api/trips`,
         {
           method: isEditing ? "PUT" : "POST",
           headers: { Authorization: `Bearer ${token}` },

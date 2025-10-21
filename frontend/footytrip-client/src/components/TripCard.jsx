@@ -5,7 +5,7 @@ const TripCard = ({ country, city, stadium, date, photo }) => {
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden">
       <img
-        src={`http://127.0.0.1:5000/static/uploads/trips/${photo}`}
+        src={`${process.env.REACT_APP_API_BASE_URL}/static/uploads/trips/${photo}`}
         alt="Trip"
         className="h-48 w-full object-cover"
       />

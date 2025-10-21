@@ -15,7 +15,7 @@ function Setting() {
 
     useEffect(() => {
 
-      fetch("http://127.0.0.1:5000/api/me", {
+      fetch(`${process.env.REACT_APP_API_BASE_URL}/api/me`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => res.json())

@@ -61,7 +61,7 @@ function MatchForm() {
   // Fetch existing trip if editing
   useEffect(() => {
     if (isEditing) {
-      fetch(`http://127.0.0.1:5000/api/trips/${tripId}/match`)
+      fetch(`${process.env.REACT_APP_API_BASE_URL}/api/trips/${tripId}/match`)
         .then((res) => res.json())
         .then((data) => {
         setFormData({
@@ -83,7 +83,7 @@ function MatchForm() {
         });
 
         if (data.photo) {
-          setPhotoPreview(`http://127.0.0.1:5000/static/uploads/match/${data.photo}`);
+          setPhotoPreview(`${process.env.REACT_APP_API_BASE_URL}/static/uploads/match/${data.photo}`);
         }
 
         if (data.home_team_league_id) {
@@ -108,7 +108,7 @@ function MatchForm() {
   useEffect(() => {
     const fetchLeagues = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:5000/api/leagues");
+        const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/leagues`);
         const data = await res.json();
         setAllLeagues(data); // store all leagues
       } catch (err) {
@@ -137,7 +137,7 @@ function MatchForm() {
   const fetchTeams = async (leagueId, setState) => {
     try {
       const res = await fetch(
-        `http://127.0.0.1:5000/api/teams?league_id=${leagueId}`
+        `${process.env.REACT_APP_API_BASE_URL}/api/teams?league_id=${leagueId}`
       );
       const data = await res.json();
       setState(data);
@@ -150,7 +150,7 @@ function MatchForm() {
   const fetchPlayers = async (team_id) => {
   try {
     const res = await fetch(
-      `http://127.0.0.1:5000/api/players?team_id=${team_id}`
+      `${process.env.REACT_APP_API_BASE_URL}/api/players?team_id=${team_id}`
     );
     const data = await res.json();
     setPlayers(data);
@@ -182,8 +182,8 @@ function MatchForm() {
 
       const res = await fetch(
         isEditing
-          ? `http://127.0.0.1:5000/api/trips/${tripId}/match/edit`
-          : `http://127.0.0.1:5000/api/trips/${tripId}/match`,
+          ? `${process.env.REACT_APP_API_BASE_URL}/api/trips/${tripId}/match/edit`
+          : `${process.env.REACT_APP_API_BASE_URL}/api/trips/${tripId}/match`,
         {
           method: isEditing ? "PUT" : "POST",
           headers: {
