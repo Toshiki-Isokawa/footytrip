@@ -18,7 +18,7 @@ function TripDetail() {
   // Fetch logged-in user
   useEffect(() => {
     if (token) {
-      fetch("http://127.0.0.1:5000/api/me", {
+      fetch(`${process.env.REACT_APP_API_BASE_URL}/api/me`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => res.json())
@@ -34,14 +34,14 @@ function TripDetail() {
   }, [token, showModal]);
 
   useEffect(() => {
-    fetch(`http://127.0.0.1:5000/api/trips/${id}`)
+    fetch(`${process.env.REACT_APP_API_BASE_URL}/api/trips/${id}`)
       .then(res => res.json())
       .then(data => setTrip(data))
       .catch(err => console.error("Error fetching trip:", err));
   }, [id]);
 
   useEffect(() => {
-    fetch(`http://127.0.0.1:5000/api/trips/${id}/match`)
+    fetch(`${process.env.REACT_APP_API_BASE_URL}/api/trips/${id}/match`)
       .then(res => {
         if (res.status === 404) return null;
         return res.json();
@@ -54,7 +54,7 @@ function TripDetail() {
   useEffect(() => {
     if (!token) return;
 
-    fetch(`http://127.0.0.1:5000/api/trips/${id}/favorite`, {
+    fetch(`${process.env.REACT_APP_API_BASE_URL}/api/trips/${id}/favorite`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -72,14 +72,14 @@ function TripDetail() {
     try {
       if (isFavorite) {
         // Remove from favorites
-        await fetch(`http://127.0.0.1:5000/api/trips/${id}/favorite`, {
+        await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/trips/${id}/favorite`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
         });
         setIsFavorite(false);
       } else {
         // Add to favorites
-        await fetch(`http://127.0.0.1:5000/api/trips/${id}/favorite`, {
+        await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/trips/${id}/favorite`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -96,7 +96,7 @@ function TripDetail() {
     }
 
     try {
-        const res = await fetch(`http://127.0.0.1:5000/api/trips/${id}`, {
+        const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/trips/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
         });
@@ -142,7 +142,7 @@ function TripDetail() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {trip.photo && (
             <img
-              src={`http://127.0.0.1:5000/static/uploads/trips/${trip.photo}`}
+              src={`${process.env.REACT_APP_API_BASE_URL}/static/uploads/trips/${trip.photo}`}
               alt={trip.title}
               className="w-full h-64 object-cover rounded-lg shadow-md"
             />

@@ -10,7 +10,7 @@ function AccountInfoCard({ user }) {
       <div className="flex flex-col items-center space-y-3">
         {user.profile ? (
           <img
-            src={`http://127.0.0.1:5000/static/uploads/profiles/${user.profile}`}
+            src={`${process.env.REACT_APP_API_BASE_URL}/static/uploads/profiles/${user.profile}`}
             alt="Profile"
             className="w-24 h-24 rounded-full object-cover border"
           />

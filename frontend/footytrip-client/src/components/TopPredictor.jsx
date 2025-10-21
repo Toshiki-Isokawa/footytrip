@@ -20,7 +20,7 @@ const TopPredictor = ({ userId, name, profileIcon, point, favTeam, favPlayer, cl
       onClick={handleClick}
     >
       <img
-        src={`http://127.0.0.1:5000/static/uploads/profiles/${profileIcon}`}
+        src={`${process.env.REACT_APP_API_BASE_URL}/static/uploads/profiles/${profileIcon}`}
         alt={name}
         className="w-14 h-14 rounded-full object-cover border border-gray-300"
       />

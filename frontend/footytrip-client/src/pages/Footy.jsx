@@ -29,8 +29,8 @@ function Footy() {
     const fetchBaseData = async () => {
       try {
         const [infoRes, meRes] = await Promise.all([
-          fetch(`http://127.0.0.1:5000/api/users/${userId}`),
-          fetch(`http://127.0.0.1:5000/api/me`, {
+          fetch(`${process.env.REACT_APP_API_BASE_URL}/api/users/${userId}`),
+          fetch(`${process.env.REACT_APP_API_BASE_URL}/api/me`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
@@ -57,7 +57,7 @@ function Footy() {
       if (!me?.login?.user_id || !userInfo?.id) return;
 
       try {
-        const res = await fetch(`http://127.0.0.1:5000/api/users/${userId}/followers`);
+        const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/users/${userId}/followers`);
         const data = await res.json();
 
         const amIFollowing = data.some((f) => f.id === me.login.user_id);
@@ -75,7 +75,7 @@ function Footy() {
     const fetchTabData = async () => {
       try {
         if (activeTab === "followers") {
-          const res = await fetch(`http://127.0.0.1:5000/api/users/${userId}/followers`);
+          const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/users/${userId}/followers`);
           const data = await res.json();
           setFollowers(data);
 
@@ -85,15 +85,15 @@ function Footy() {
           }
         }
         if (activeTab === "following") {
-          const res = await fetch(`http://127.0.0.1:5000/api/users/${userId}/following`);
+          const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/users/${userId}/following`);
           setFollowing(await res.json());
         }
         if (activeTab === "trips") {
-          const res = await fetch(`http://127.0.0.1:5000/api/users/${userId}/trips`);
+          const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/users/${userId}/trips`);
           setTrips(await res.json());
         }
         if (activeTab === "favorites") {
-          const res = await fetch(`http://127.0.0.1:5000/api/users/${userId}/favorites`);
+          const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/users/${userId}/favorites`);
           setFavorites(await res.json());
         }
       } catch (err) {
@@ -108,7 +108,7 @@ function Footy() {
     try {
       const method = isFollowing ? "DELETE" : "POST";
       const res = await fetch(
-        `http://127.0.0.1:5000/api/follow/${userId}`,
+        `${process.env.REACT_APP_API_BASE_URL}/api/follow/${userId}`,
         {
           method,
           headers: { Authorization: `Bearer ${token}` },
@@ -164,7 +164,7 @@ function Footy() {
                 <img
                   src={
                     userInfo.profile
-                      ? `http://127.0.0.1:5000/static/uploads/profiles/${userInfo.profile}`
+                      ? `${process.env.REACT_APP_API_BASE_URL}/static/uploads/profiles/${userInfo.profile}`
                       : "/default-avatar.png"
                   }
                   alt="Profile"
@@ -298,7 +298,7 @@ function Footy() {
                       <img
                         src={
                           f.profile
-                            ? `http://127.0.0.1:5000/static/uploads/profiles/${f.profile}`
+                            ? `${process.env.REACT_APP_API_BASE_URL}/static/uploads/profiles/${f.profile}`
                             : "/default-avatar.png"
                         }
                         alt="Follower"
@@ -320,7 +320,7 @@ function Footy() {
                       <img
                         src={
                           f.profile
-                            ? `http://127.0.0.1:5000/static/uploads/profiles/${f.profile}`
+                            ? `${process.env.REACT_APP_API_BASE_URL}/static/uploads/profiles/${f.profile}`
                             : "/default-avatar.png"
                         }
                         alt="Following"

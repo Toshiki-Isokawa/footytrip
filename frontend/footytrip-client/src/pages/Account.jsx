@@ -31,7 +31,7 @@ function Account() {
 
     // Fetch leagues once 
     useEffect(() => {
-        fetch("http://127.0.0.1:5000/api/leagues")
+        fetch(`${process.env.REACT_APP_API_BASE_URL}/api/leagues`)
             .then((res) => res.json())
             .then((data) => setAllLeagues(data))
             .catch((err) => console.error("Failed to fetch leagues:", err));
@@ -47,7 +47,7 @@ function Account() {
     useEffect(() => {
         if (!token) return;
 
-        fetch("http://127.0.0.1:5000/api/me", {
+        fetch(`${process.env.REACT_APP_API_BASE_URL}/api/me`, {
             headers: { Authorization: `Bearer ${token}` },
         })
             .then((res) => res.json())
@@ -67,7 +67,7 @@ function Account() {
                         setPreviewUrl(
                             u.profile.startsWith("http")
                                 ? u.profile
-                                : `http://127.0.0.1:5000/static/uploads/profiles/${u.profile}`
+                                : `${process.env.REACT_APP_API_BASE_URL}/static/uploads/profiles/${u.profile}`
                         );
                     }
                 } else {
@@ -80,7 +80,7 @@ function Account() {
     // Fetch teams when league selected 
     useEffect(() => {
         if (!selectedLeague) return;
-        fetch(`http://127.0.0.1:5000/api/teams?league_id=${selectedLeague}`)
+        fetch(`${process.env.REACT_APP_API_BASE_URL}/api/teams?league_id=${selectedLeague}`)
             .then((res) => res.json())
             .then((data) => setTeams(data))
             .catch((err) => console.error("Failed to fetch teams:", err));
@@ -90,7 +90,7 @@ function Account() {
     const handleSearchPlayer = () => {
         if (!playerQuery.trim()) return;
         fetch(
-            `http://127.0.0.1:5000/api/players/search?search=${encodeURIComponent(playerQuery)}`
+            `${process.env.REACT_APP_API_BASE_URL}/api/players/search?search=${encodeURIComponent(playerQuery)}`
         )
             .then((res) => res.json())
             .then((data) => {
@@ -125,8 +125,8 @@ function Account() {
         if (profileImage) formData.append("profile", profileImage);
 
         const endpoint = isEditing
-            ? "http://127.0.0.1:5000/api/account/edit"
-            : "http://127.0.0.1:5000/api/account";
+            ? `${process.env.REACT_APP_API_BASE_URL}/api/account/edit`
+            : `${process.env.REACT_APP_API_BASE_URL}/api/account`;
 
         const res = await fetch(endpoint, {
             method: isEditing ? "PUT" : "POST",

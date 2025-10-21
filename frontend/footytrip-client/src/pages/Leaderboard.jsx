@@ -26,7 +26,7 @@ const Leaderboard = () => {
   useEffect(() => {
     const fetchCurrentWeek = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:5000/api/predictions/week");
+        const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/predictions/week`);
         const weekNum = await res.json();
         setCurrentWeek(weekNum.week);
       } catch (err) {
@@ -44,9 +44,9 @@ const Leaderboard = () => {
       setLoading(true);
       try {
         const weeklyRes = await fetch(
-          `http://127.0.0.1:5000/api/predictions/leaderboard/weekly?week=${currentWeek}`
+          `${process.env.REACT_APP_API_BASE_URL}/api/predictions/leaderboard/weekly?week=${currentWeek}`
         );
-        const overallRes = await fetch("http://127.0.0.1:5000/api/predictions/leaderboard/overall");
+        const overallRes = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/predictions/leaderboard/overall`);
 
         if (weeklyRes.ok) {
           const data = await weeklyRes.json();

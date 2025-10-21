@@ -14,7 +14,7 @@ const Trip = () => {
   const [userTrips, setUserTrips] = useState([]);
   const { token, loading } = useContext(AuthContext);
   useEffect(() => {
-    fetch("http://127.0.0.1:5000/api/me", {
+    fetch(`${process.env.REACT_APP_API_BASE_URL}/api/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -23,7 +23,7 @@ const Trip = () => {
           setUser(data);
 
           // Fetch logged-in user trips
-          fetch(`http://127.0.0.1:5000/api/trips/footy/${data.login.user_id}`, {
+          fetch(`${process.env.REACT_APP_API_BASE_URL}/api/trips/footy/${data.login.user_id}`, {
             headers: { Authorization: `Bearer ${token}` },
           })
             .then((res) => res.json())

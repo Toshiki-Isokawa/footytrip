@@ -35,7 +35,7 @@ const Schedule = () => {
     const fetchUser = async () => {
       setUserLoading(true);
       try {
-        const res = await fetch("http://127.0.0.1:5000/api/me", {
+        const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
@@ -64,7 +64,7 @@ const Schedule = () => {
         const dateStr = formatDate(selectedDate);
         console.log(`[FETCH START] date=${dateStr} at ${new Date().toISOString()}`);
 
-        const res = await axios.get(`http://127.0.0.1:5000/api/schedule?date=${dateStr}`);
+        const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/schedule?date=${dateStr}`);
 
         const endTime = performance.now();
         console.log(`[FETCH END] took ${(endTime - startTime).toFixed(2)} ms`);
@@ -86,7 +86,7 @@ const Schedule = () => {
   useEffect(() => {
     const fetchLeagues = async () => {
       try {
-        const res = await axios.get("http://127.0.0.1:5000/api/leagues");
+        const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/leagues`);
         setLeagues(
           res.data.map((l) => ({
             value: l.id,

@@ -22,7 +22,7 @@ export default function ChatWindow({ onClose }) {
       }
       setFetchingUserId(true);
       try {
-        const res = await fetch("http://127.0.0.1:5000/api/check", {
+        const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/check`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) {
@@ -68,7 +68,7 @@ export default function ChatWindow({ onClose }) {
       setError(null);
       setLoading(true);
       try {
-        const res = await fetch("http://127.0.0.1:5000/api/check", {
+        const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/check`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) {
@@ -106,7 +106,7 @@ export default function ChatWindow({ onClose }) {
 
     setLoading(true);
     try {
-      const res = await fetch("http://127.0.0.1:5000/api/chat", {
+      const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

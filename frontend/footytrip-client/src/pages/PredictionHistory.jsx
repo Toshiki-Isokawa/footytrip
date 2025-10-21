@@ -25,7 +25,7 @@ const PredictionHistory = () => {
   useEffect(() => {
     const fetchRealWeek = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:5000/api/predictions/week", {
+        const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/predictions/week`, {
           method: "GET",
         });
         if (!res.ok) throw new Error("Failed to fetch real week");
@@ -51,7 +51,7 @@ const PredictionHistory = () => {
 
     const fetchUserId = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:5000/api/check", {
+        const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/check`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) {
@@ -76,7 +76,7 @@ const PredictionHistory = () => {
       setLoading(true);
       try {
         const res = await fetch(
-          `http://127.0.0.1:5000/api/predictions/fetch?user_id=${userId}&week=${currentWeek}`,
+          `${process.env.REACT_APP_API_BASE_URL}/api/predictions/fetch?user_id=${userId}&week=${currentWeek}`,
           { method: "GET", headers: { Authorization: `Bearer ${token}` } }
         );
 
@@ -178,7 +178,7 @@ const PredictionHistory = () => {
                 onClick={async () => {
                   setIsCalculating(true);
                   try {
-                    const res = await fetch("http://127.0.0.1:5000/api/predictions/calc-points", {
+                    const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/predictions/calc-points`, {
                       method: "POST",
                       headers: { Authorization: `Bearer ${token}` },
                     });
@@ -187,7 +187,7 @@ const PredictionHistory = () => {
                       alert("Calculation completed successfully!");
                       // Refresh current prediction
                       const refreshRes = await fetch(
-                        `http://127.0.0.1:5000/api/predictions/fetch?user_id=${userId}&week=${prediction.week}`,
+                        `${process.env.REACT_APP_API_BASE_URL}/api/predictions/fetch?user_id=${userId}&week=${prediction.week}`,
                         { method: "GET", headers: { Authorization: `Bearer ${token}` } }
                       );
                       if (refreshRes.ok) {

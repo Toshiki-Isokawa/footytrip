@@ -11,14 +11,14 @@ const FavoriteTrips = () => {
       try {
         // Get user info first
         const token = localStorage.getItem("access_token");
-        const resUser = await fetch("http://127.0.0.1:5000/api/check", {
+        const resUser = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/check`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const userData = await resUser.json();
 
         // Fetch favorites
         const resFav = await fetch(
-          `http://127.0.0.1:5000/api/users/${userData.user_id}/favorites`,
+          `${process.env.REACT_APP_API_BASE_URL}/api/users/${userData.user_id}/favorites`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -48,7 +48,7 @@ const FavoriteTrips = () => {
         >
           {trip.photo && (
             <img
-              src={`http://127.0.0.1:5000/static/uploads/trips/${trip.photo}`}
+              src={`${process.env.REACT_APP_API_BASE_URL}/static/uploads/trips/${trip.photo}`}
               alt={trip.title}
               className="w-full h-40 object-cover"
             />

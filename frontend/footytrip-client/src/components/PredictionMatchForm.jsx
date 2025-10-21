@@ -31,13 +31,13 @@ const PredictionMatchForm = ({ match, onChange, onRemove, initialData, removable
       try {
         // Home logo
         const homeRes = await fetch(
-          `http://127.0.0.1:5000/api/logo?team_id=${match.home_team.id}`
+          `${process.env.REACT_APP_API_BASE_URL}/api/logo?team_id=${match.home_team.id}`
         );
         const homeData = await homeRes.json();
 
         // Away logo
         const awayRes = await fetch(
-          `http://127.0.0.1:5000/api/logo?team_id=${match.away_team.id}`
+          `${process.env.REACT_APP_API_BASE_URL}/api/logo?team_id=${match.away_team.id}`
         );
         const awayData = await awayRes.json();
 
@@ -48,7 +48,7 @@ const PredictionMatchForm = ({ match, onChange, onRemove, initialData, removable
 
         // Stadium (home team id)
         const stadiumRes = await fetch(
-          `http://127.0.0.1:5000/api/stadium?team_id=${match.home_team.id}`
+          `${process.env.REACT_APP_API_BASE_URL}/api/stadium?team_id=${match.home_team.id}`
         );
         const stadiumData = await stadiumRes.json();
         setStadium(stadiumData.stadium || "Unknown stadium");

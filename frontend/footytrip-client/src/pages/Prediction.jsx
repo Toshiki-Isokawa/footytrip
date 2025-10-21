@@ -18,7 +18,7 @@ const Prediction = () => {
   useEffect(() => {
     const fetchUserId = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:5000/api/check", {
+        const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/check`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -47,7 +47,7 @@ const Prediction = () => {
   useEffect(() => {
     const fetchWeek = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:5000/api/predictions/week");
+        const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/predictions/week`);
         if (res.ok) {
           const data = await res.json();
           setRealCurrentWeek(data.week);
@@ -65,8 +65,8 @@ const Prediction = () => {
 
       try {
         const [currentRes, lastRes] = await Promise.all([
-          fetch(`http://127.0.0.1:5000/api/predictions/current?user_id=${userId}`),
-          fetch(`http://127.0.0.1:5000/api/predictions/last?user_id=${userId}`),
+          fetch(`${process.env.REACT_APP_API_BASE_URL}/api/predictions/current?user_id=${userId}`),
+          fetch(`${process.env.REACT_APP_API_BASE_URL}/api/predictions/last?user_id=${userId}`),
         ]);
 
         if (currentRes.ok) {

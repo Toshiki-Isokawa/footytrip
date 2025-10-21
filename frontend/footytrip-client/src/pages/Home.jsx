@@ -28,7 +28,7 @@ const Home = () => {
 
             try {
                 // Check if token is valid
-                const res = await fetch("http://127.0.0.1:5000/api/me", {
+                const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/me`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
 
@@ -38,14 +38,14 @@ const Home = () => {
                 setIsLoggedIn(true);
 
                 const feedRes = await fetch(
-                    `http://127.0.0.1:5000/api/users/${data.login.user_id}/feed`,
+                    `${process.env.REACT_APP_API_BASE_URL}/api/users/${data.login.user_id}/feed`,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
                 if (feedRes.ok) {
                     setTrips(await feedRes.json());
                 }
 
-                const upcomingRes = await fetch("http://127.0.0.1:5000/api/upcoming");
+                const upcomingRes = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/upcoming`);
                 if (upcomingRes.ok) {
                 const matchData = await upcomingRes.json();
                 if (matchData.status === "success") {
@@ -54,7 +54,7 @@ const Home = () => {
                 }
 
                 const leaderboardRes = await fetch(
-                    "http://127.0.0.1:5000/api/predictions/leaderboard/overall"
+                    `${process.env.REACT_APP_API_BASE_URL}/api/predictions/leaderboard/overall`
                 );
                 if (leaderboardRes.ok) {
                     const leaderboard = await leaderboardRes.json();

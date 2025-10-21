@@ -11,13 +11,13 @@ const PredictionCard = ({ prediction }) => {
         const awayId = match.away_team.id;
 
         if (!newLogos[homeId]) {
-          const res = await fetch(`http://127.0.0.1:5000/api/logo?team_id=${homeId}`);
+          const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/logo?team_id=${homeId}`);
           const data = await res.json();
           newLogos[homeId] = data.logo_url;
         }
 
         if (!newLogos[awayId]) {
-          const res = await fetch(`http://127.0.0.1:5000/api/logo?team_id=${awayId}`);
+          const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/logo?team_id=${awayId}`);
           const data = await res.json();
           newLogos[awayId] = data.logo_url;
         }
