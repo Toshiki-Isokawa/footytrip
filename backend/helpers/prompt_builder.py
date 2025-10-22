@@ -31,10 +31,17 @@ def build_prediction_prompt(user_id, user_message):
         [f"- {m['home_team']} vs {m['away_team']} on {m['kickoff_time']}" for m in matches]
     ) if matches else "No upcoming matches found."
 
-    history_summary = "\n".join(
-        [f"- {h['match']} → You predicted {h['predicted_result']} (Actual: {h['actual_result']})"
-         for h in history]
-    ) if history else "No prediction history found."
+    if history:
+        for h in history:
+            print("DEBUG: prediction history item =", h)
+        history_summary = "\n".join(
+            [
+                f"- {h.get('match', 'Unknown Match')} → You predicted {h.get('predicted_result', 'N/A')} (Actual: {h.get('actual_result', 'N/A')})"
+                for h in history
+            ]
+        )
+    else:
+        history_summary = "No prediction history found."
 
     prompt = f"""
     You are an AI Football Prediction Assistant for the web app "FootyTrip".
