@@ -28,7 +28,7 @@ def create_app():
 
     # init extensions
     db.init_app(app)
-    CORS(app, resources={r"/api/*": {"origins": ["http://localhost:3000", "http://127.0.0.1:3000"]}})
+    CORS(app, resources={r"/api/*": {"origins": ["http://localhost:3000", "http://127.0.0.1:3000", "https://footytrip.onrender.com", "https://footytrip.vercel.app"]}})
     bcrypt.init_app(app)
     jwt.init_app(app)
     migrate = Migrate(app, db)
